@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/HoleM54.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/HoleM54.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/HoleM54
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Hole import Hole
 
 # Import all class method
@@ -31,11 +35,6 @@ try:
     from ..Methods.Slot.HoleM54.comp_surface import comp_surface
 except ImportError as error:
     comp_surface = error
-
-try:
-    from ..Methods.Slot.HoleM54.get_height_magnet import get_height_magnet
-except ImportError as error:
-    get_height_magnet = error
 
 
 from ._check import InitUnKnowClassError
@@ -89,38 +88,35 @@ class HoleM54(Hole):
         )
     else:
         comp_surface = comp_surface
-    # cf Methods.Slot.HoleM54.get_height_magnet
-    if isinstance(get_height_magnet, ImportError):
-        get_height_magnet = property(
-            fget=lambda x: raise_(
-                ImportError(
-                    "Can't use HoleM54 method get_height_magnet: "
-                    + str(get_height_magnet)
-                )
-            )
-        )
-    else:
-        get_height_magnet = get_height_magnet
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, H0=0.003, H1=0, W0=0.013, R1=0.02, Zh=36, mat_void=-1, init_dict=None
+        self,
+        H0=0.003,
+        H1=0,
+        W0=0.013,
+        R1=0.02,
+        Zh=36,
+        mat_void=-1,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_void == -1:
-            mat_void = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -136,7 +132,7 @@ class HoleM54(Hole):
                 Zh = init_dict["Zh"]
             if "mat_void" in list(init_dict.keys()):
                 mat_void = init_dict["mat_void"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.H0 = H0
         self.H1 = H1
         self.W0 = W0
@@ -147,7 +143,7 @@ class HoleM54(Hole):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         HoleM54_str = ""
         # Get the properties inherited from Hole
@@ -178,8 +174,7 @@ class HoleM54(Hole):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Hole
         HoleM54_dict = super(HoleM54, self).as_dict()
@@ -187,7 +182,7 @@ class HoleM54(Hole):
         HoleM54_dict["H1"] = self.H1
         HoleM54_dict["W0"] = self.W0
         HoleM54_dict["R1"] = self.R1
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         HoleM54_dict["__class__"] = "HoleM54"
         return HoleM54_dict
@@ -211,9 +206,15 @@ class HoleM54(Hole):
         check_var("H0", value, "float", Vmin=0)
         self._H0 = value
 
-    # Hole depth
-    # Type : float, min = 0
-    H0 = property(fget=_get_H0, fset=_set_H0, doc=u"""Hole depth""")
+    H0 = property(
+        fget=_get_H0,
+        fset=_set_H0,
+        doc=u"""Hole depth
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H1(self):
         """getter of H1"""
@@ -224,9 +225,15 @@ class HoleM54(Hole):
         check_var("H1", value, "float", Vmin=0)
         self._H1 = value
 
-    # Hole width
-    # Type : float, min = 0
-    H1 = property(fget=_get_H1, fset=_set_H1, doc=u"""Hole width""")
+    H1 = property(
+        fget=_get_H1,
+        fset=_set_H1,
+        doc=u"""Hole width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W0(self):
         """getter of W0"""
@@ -237,9 +244,15 @@ class HoleM54(Hole):
         check_var("W0", value, "float", Vmin=0)
         self._W0 = value
 
-    # Hole angular width
-    # Type : float, min = 0
-    W0 = property(fget=_get_W0, fset=_set_W0, doc=u"""Hole angular width""")
+    W0 = property(
+        fget=_get_W0,
+        fset=_set_W0,
+        doc=u"""Hole angular width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_R1(self):
         """getter of R1"""
@@ -250,6 +263,12 @@ class HoleM54(Hole):
         check_var("R1", value, "float", Vmin=0)
         self._R1 = value
 
-    # Hole radius
-    # Type : float, min = 0
-    R1 = property(fget=_get_R1, fset=_set_R1, doc=u"""Hole radius""")
+    R1 = property(
+        fget=_get_R1,
+        fset=_set_R1,
+        doc=u"""Hole radius
+
+        :Type: float
+        :min: 0
+        """,
+    )

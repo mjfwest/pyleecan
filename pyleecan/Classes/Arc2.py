@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Arc2.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Arc2.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Arc2
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Arc import Arc
 
 # Import all class method
@@ -204,22 +208,33 @@ class Arc2(Arc):
         )
     else:
         translate = translate
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, begin=0, center=0, angle=1.57079633, label="", init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(
+        self,
+        begin=0,
+        center=0,
+        angle=1.57079633,
+        label="",
+        init_dict=None,
+        init_str=None,
+    ):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -231,7 +246,7 @@ class Arc2(Arc):
                 angle = init_dict["angle"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.begin = begin
         self.center = center
         self.angle = angle
@@ -241,7 +256,7 @@ class Arc2(Arc):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Arc2_str = ""
         # Get the properties inherited from Arc
@@ -269,15 +284,14 @@ class Arc2(Arc):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Arc
         Arc2_dict = super(Arc2, self).as_dict()
         Arc2_dict["begin"] = self.begin
         Arc2_dict["center"] = self.center
         Arc2_dict["angle"] = self.angle
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Arc2_dict["__class__"] = "Arc2"
         return Arc2_dict
@@ -300,10 +314,13 @@ class Arc2(Arc):
         check_var("begin", value, "complex")
         self._begin = value
 
-    # begin point of the arc
-    # Type : complex
     begin = property(
-        fget=_get_begin, fset=_set_begin, doc=u"""begin point of the arc"""
+        fget=_get_begin,
+        fset=_set_begin,
+        doc=u"""begin point of the arc
+
+        :Type: complex
+        """,
     )
 
     def _get_center(self):
@@ -315,9 +332,14 @@ class Arc2(Arc):
         check_var("center", value, "complex")
         self._center = value
 
-    # center of the arc
-    # Type : complex
-    center = property(fget=_get_center, fset=_set_center, doc=u"""center of the arc""")
+    center = property(
+        fget=_get_center,
+        fset=_set_center,
+        doc=u"""center of the arc
+
+        :Type: complex
+        """,
+    )
 
     def _get_angle(self):
         """getter of angle"""
@@ -328,8 +350,13 @@ class Arc2(Arc):
         check_var("angle", value, "float", Vmin=-6.2831853071796, Vmax=6.2831853071796)
         self._angle = value
 
-    # opening angle of the arc
-    # Type : float, min = -6.2831853071796, max = 6.2831853071796
     angle = property(
-        fget=_get_angle, fset=_set_angle, doc=u"""opening angle of the arc"""
+        fget=_get_angle,
+        fset=_set_angle,
+        doc=u"""opening angle of the arc
+
+        :Type: float
+        :min: -6.2831853071796
+        :max: 6.2831853071796
+        """,
     )

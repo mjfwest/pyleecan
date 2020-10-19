@@ -1,6 +1,6 @@
 __pycache__/
 *.pyc
-/Results
+/pyleecan/Results
 /Tests/Results
 .idea/
 /Tests/Validation/Simulation/.cache/v/cache
@@ -8,3 +8,5 @@ Internal/
 _Internal/
 *.log
 run_GUI_internal.py
+/Tests/logtest.txt
+**/.vscode

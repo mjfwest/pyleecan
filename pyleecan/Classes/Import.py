@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Import/Import.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Import/Import.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Import/Import
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 from ._check import InitUnKnowClassError
@@ -18,13 +22,13 @@ class Import(FrozenClass):
 
     VERSION = 1
 
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, init_dict=None):
+    def __init__(self, init_dict=None, init_str=None):
         """Constructor of the class. Can be use in two ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
             for Matrix, None will initialise the property with an empty Matrix
@@ -35,13 +39,15 @@ class Import(FrozenClass):
         object or dict can be given for pyleecan Object"""
 
         if init_dict is not None:  # Initialisation by dict
-            check_init_dict(init_dict, [])
+            assert init_dict == {"__class__": "Import"}
+        if init_str is not None:  # Initialisation by str
+            assert type(init_str) is str
         # The class is frozen, for now it's impossible to add new properties
         self.parent = None
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Import_str = ""
         if self.parent is None:
@@ -58,11 +64,10 @@ class Import(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         Import_dict = dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         Import_dict["__class__"] = "Import"
         return Import_dict
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/VentilationTrap.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/VentilationTrap.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/VentilationTrap
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Hole import Hole
 
 # Import all class method
@@ -103,26 +107,36 @@ class VentilationTrap(Hole):
         )
     else:
         get_center = get_center
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, Alpha0=0, D0=1, H0=1, W1=1, W2=1, Zh=36, mat_void=-1, init_dict=None
+        self,
+        Alpha0=0,
+        D0=1,
+        H0=1,
+        W1=1,
+        W2=1,
+        Zh=36,
+        mat_void=-1,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_void == -1:
-            mat_void = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -140,7 +154,7 @@ class VentilationTrap(Hole):
                 Zh = init_dict["Zh"]
             if "mat_void" in list(init_dict.keys()):
                 mat_void = init_dict["mat_void"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Alpha0 = Alpha0
         self.D0 = D0
         self.H0 = H0
@@ -152,7 +166,7 @@ class VentilationTrap(Hole):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         VentilationTrap_str = ""
         # Get the properties inherited from Hole
@@ -186,8 +200,7 @@ class VentilationTrap(Hole):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Hole
         VentilationTrap_dict = super(VentilationTrap, self).as_dict()
@@ -196,7 +209,7 @@ class VentilationTrap(Hole):
         VentilationTrap_dict["H0"] = self.H0
         VentilationTrap_dict["W1"] = self.W1
         VentilationTrap_dict["W2"] = self.W2
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         VentilationTrap_dict["__class__"] = "VentilationTrap"
         return VentilationTrap_dict
@@ -221,12 +234,15 @@ class VentilationTrap(Hole):
         check_var("Alpha0", value, "float", Vmin=0, Vmax=6.29)
         self._Alpha0 = value
 
-    # Shift angle of the hole around circumference
-    # Type : float, min = 0, max = 6.29
     Alpha0 = property(
         fget=_get_Alpha0,
         fset=_set_Alpha0,
-        doc=u"""Shift angle of the hole around circumference""",
+        doc=u"""Shift angle of the hole around circumference
+
+        :Type: float
+        :min: 0
+        :max: 6.29
+        """,
     )
 
     def _get_D0(self):
@@ -238,9 +254,15 @@ class VentilationTrap(Hole):
         check_var("D0", value, "float", Vmin=0)
         self._D0 = value
 
-    # Hole height
-    # Type : float, min = 0
-    D0 = property(fget=_get_D0, fset=_set_D0, doc=u"""Hole height""")
+    D0 = property(
+        fget=_get_D0,
+        fset=_set_D0,
+        doc=u"""Hole height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H0(self):
         """getter of H0"""
@@ -251,9 +273,15 @@ class VentilationTrap(Hole):
         check_var("H0", value, "float", Vmin=0)
         self._H0 = value
 
-    # Radius of the hole bottom
-    # Type : float, min = 0
-    H0 = property(fget=_get_H0, fset=_set_H0, doc=u"""Radius of the hole bottom""")
+    H0 = property(
+        fget=_get_H0,
+        fset=_set_H0,
+        doc=u"""Radius of the hole bottom
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W1(self):
         """getter of W1"""
@@ -264,9 +292,15 @@ class VentilationTrap(Hole):
         check_var("W1", value, "float", Vmin=0)
         self._W1 = value
 
-    # Hole small basis
-    # Type : float, min = 0
-    W1 = property(fget=_get_W1, fset=_set_W1, doc=u"""Hole small basis""")
+    W1 = property(
+        fget=_get_W1,
+        fset=_set_W1,
+        doc=u"""Hole small basis
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W2(self):
         """getter of W2"""
@@ -277,6 +311,12 @@ class VentilationTrap(Hole):
         check_var("W2", value, "float", Vmin=0)
         self._W2 = value
 
-    # Hole large basis
-    # Type : float, min = 0
-    W2 = property(fget=_get_W2, fset=_set_W2, doc=u"""Hole large basis""")
+    W2 = property(
+        fget=_get_W2,
+        fset=_set_W2,
+        doc=u"""Hole large basis
+
+        :Type: float
+        :min: 0
+        """,
+    )

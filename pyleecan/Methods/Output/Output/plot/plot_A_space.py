@@ -1,12 +1,19 @@
 # -*- coding: utf-8 -*-
 
+from .....Functions.Plot.plot_A_space import plot_A_space as plot_A_space_fct
+from .....Functions.Plot.plot_A_fft_space import (
+    plot_A_fft_space as plot_A_fft_space_fct,
+)
 from .....Functions.init_fig import init_fig
-from .....Functions.Plot.plot_A_2D import plot_A_2D
+from SciDataTool import VectorField
+
+from matplotlib.pyplot import subplots
 
 
 def plot_A_space(
     self,
     Data_str,
+    index_list=[0],
     t=None,
     t_index=0,
     is_deg=True,
@@ -16,7 +23,16 @@ def plot_A_space(
     fund_harm=None,
     is_norm=False,
     unit="SI",
-    out_list=[],
+    data_list=[],
+    component_list=None,
+    legend_list=[],
+    color_list=[],
+    linestyle_list=["-"],
+    save_path=None,
+    y_min=None,
+    y_max=None,
+    mag_max=None,
+    is_auto_ticks=True,
 ):
     """Plots a field as a function of space (angle)
 
@@ -25,7 +41,9 @@ def plot_A_space(
     self : Output
         an Output object
     Data_str : str
-        name of the Data Object to plot (e.g. "mag.Br")
+        name of the Data object to plot (e.g. "mag.Br")
+    index_list : list
+        list of indices to take from a components axis
     t : float
         time value at which to slice
     t_index : int
@@ -44,101 +62,121 @@ def plot_A_space(
         boolean indicating if the field must be normalized
     unit : str
         unit in which to plot the field
-    out_list : list
-        list of Output objects to compare
+    data_list : list
+        list of Data objects to compare
+    component_list : list
+        list of component names to plot in separate figures
+    legend_list : list
+        list of legends to use for each Data object (including reference one) instead of data.name
+    color_list : list
+        list of colors to use for each Data object
+    save_path : str
+        path and name of the png file to save
+    y_min : float
+        minimum value for the y-axis
+    y_max : float
+        maximum value for the y-axis
+    mag_max : float
+        maximum alue for the y-axis of the fft
+    is_auto_ticks : bool
+        in fft, adjust ticks to wavenumbers (deactivate if too close)
     """
 
     # Get Data object names
-    Phys = getattr(self, Data_str.split(".")[0])
-    A = getattr(Phys, Data_str.split(".")[1])
-    B_list = []
-    for out in out_list:
-        Phys = getattr(out, Data_str.split(".")[0])
-        B_list.append(getattr(Phys, Data_str.split(".")[1]))
+    phys = getattr(self, Data_str.split(".")[0])
+    data = getattr(phys, Data_str.split(".")[1])
 
-    # Set plot
-    (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
-    legend_list = [self.post.legend_name]
-    for out in out_list:
-        legend_list.append(out.post.legend_name)
-    color_list = [self.post.line_color]
-    for out in out_list:
-        color_list.append(out.post.line_color)
-    if is_deg:
-        xlabel = "Angle [°]"
-    else:
-        xlabel = "Angle [rad]"
-    if unit == "SI":
-        unit = A.unit
-    if is_norm:
-        ylabel = r"$\frac{" + A.symbol + "}{" + A.symbol + "_0}\, [" + unit + "]$"
-    else:
-        ylabel = r"$" + A.symbol + "\, [" + unit + "]$"
-
-    # Extract the fields
-    if t != None:
-        t_str = "time=" + str(t)
-    else:
-        t_str = "time[" + str(t_index) + "]"
-
-    if is_deg:
-        (angle, Ydata) = A.compare_along(
-            "angle{°}", t_str, data_list=B_list, unit=unit, is_norm=is_norm
-        )
-    else:
-        (angle, A_angle) = A.compare_along(
-            "angle", t_str, data_list=B_list, unit=unit, is_norm=is_norm
-        )
-
-    title = A.name + " over space at " + t_str
-
-    # Plot the original graph
-    plot_A_2D(
-        angle,
-        Ydata,
-        legend_list=legend_list,
-        color_list=color_list,
-        fig=fig,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-    )
-
-    if is_fft:
-        title = "FFT of " + A.name
-        ylabel = r"$|\widehat{" + A.symbol + "}|\, [" + unit + "]$"
-
-        if is_spaceorder:
-            order_max = r_max / A.normalizations.get("space_order")
-            xlabel = "Space order []"
-            (wavenumber, Ydata) = A.compare_magnitude_along(
-                "wavenumber=[0," + str(order_max) + "]{space_order}",
-                t_str,
-                data_list=B_list,
-                unit=unit,
-                is_norm=False,
-            )
-
+    # Call the plot function
+    if isinstance(data, VectorField):
+        if component_list is None:  # default: extract all components
+            component_list = data.components.keys()
+        ncomp = len(component_list)
+        if is_fft:
+            fig, axs = subplots(2, ncomp, tight_layout=True, figsize=(20, 10))
+            for i, comp in enumerate(component_list):
+                plot_A_space_fct(
+                    data.components[comp],
+                    index_list=index_list,
+                    t=t,
+                    t_index=t_index,
+                    is_deg=is_deg,
+                    is_norm=is_norm,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    linestyle_list=linestyle_list,
+                    save_path=save_path,
+                    y_min=y_min,
+                    y_max=y_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i,
+                )
+                plot_A_fft_space_fct(
+                    data.components[comp],
+                    t=t,
+                    t_index=t_index,
+                    is_spaceorder=is_spaceorder,
+                    r_max=r_max,
+                    fund_harm=fund_harm,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    save_path=save_path,
+                    mag_max=mag_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i + ncomp,
+                )
         else:
-            xlabel = "Wavenumber []"
-            (wavenumber, Ydata) = A.compare_magnitude_along(
-                "wavenumber=[0," + str(r_max) + "]",
-                t_str,
-                data_list=B_list,
-                unit=unit,
-                is_norm=False,
-            )
+            fig, axs = subplots(1, ncomp, tight_layout=True, figsize=(20, 10))
+            for i, comp in enumerate(component_list):
+                plot_A_space_fct(
+                    data.components[comp],
+                    index_list=index_list,
+                    t=t,
+                    t_index=t_index,
+                    is_deg=is_deg,
+                    is_norm=is_norm,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    linestyle_list=linestyle_list,
+                    save_path=save_path,
+                    y_min=y_min,
+                    y_max=y_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i,
+                )
 
-        plot_A_2D(
-            wavenumber,
-            Ydata,
+    else:
+        (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
+        plot_A_space_fct(
+            data,
+            index_list=index_list,
+            t=t,
+            t_index=t_index,
+            is_deg=is_deg,
+            is_fft=is_fft,
+            is_spaceorder=is_spaceorder,
+            r_max=r_max,
+            fund_harm=fund_harm,
+            is_norm=is_norm,
+            unit=unit,
+            data_list=data_list,
             legend_list=legend_list,
             color_list=color_list,
+            linestyle_list=linestyle_list,
+            save_path=save_path,
+            y_min=y_min,
+            y_max=y_max,
+            mag_max=mag_max,
+            is_auto_ticks=is_auto_ticks,
             fig=fig,
-            title=title,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            type="bargraph",
-            is_fund=True,
-            fund_harm=fund_harm,
         )
+
+    fig.show()

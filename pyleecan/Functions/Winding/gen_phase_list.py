@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from random import choice
+import string
+from ...definitions import config_dict
 
-from ...Methods.Machine import PHASE_COLOR, PHASE_NAME
+PHASE_COLORS = config_dict["PLOT"]["COLOR_DICT"]["PHASE_COLORS"]
 
 
 def gen_color(N):
@@ -20,7 +22,7 @@ def gen_color(N):
 
     """
 
-    color_list = PHASE_COLOR
+    color_list = PHASE_COLORS
     if N < len(color_list):
         return color_list[:N]
     else:
@@ -50,13 +52,15 @@ def gen_color(N):
     return color_list
 
 
-def gen_name(N):
+def gen_name(N, is_add_phase=False):
     """Generate a list of phase name
 
     Parameters
     ----------
     N : int
         number of name the generate
+    is_add_phase : bool
+        True to add "Phase " in the resulting names
 
     Returns
     -------
@@ -65,11 +69,14 @@ def gen_name(N):
 
     """
 
-    Alpha = PHASE_NAME
+    Alpha = string.ascii_uppercase
 
     Name_list = list()
     for i in range(N):
-        name = ""
+        if is_add_phase:
+            name = "Phase "
+        else:
+            name = ""
         if i // 26 > 0:
             name += Alpha[(i // 26) - 1]
         name += Alpha[i % 26]

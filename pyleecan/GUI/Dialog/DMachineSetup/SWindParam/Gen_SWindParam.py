@@ -2,14 +2,12 @@
 """File generated according to SWindParam/gen_list.json
 WARNING! All changes made in this file will be lost!
 """
-
 from pyleecan.GUI.Dialog.DMachineSetup.SWindParam.Ui_SWindParam import Ui_SWindParam
 
 
 class Gen_SWindParam(Ui_SWindParam):
     def setupUi(self, SWindParam):
-        """Abstract class to update the widget according to the csv doc
-        """
+        """Abstract class to update the widget according to the csv doc"""
         Ui_SWindParam.setupUi(self, SWindParam)
         # Setup of in_Ntcoil
         txt = self.tr(u"""number of turns per coil""")

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Arc1.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Arc1.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Arc1
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Arc import Arc
 
 # Import all class method
@@ -204,9 +208,9 @@ class Arc1(Arc):
         )
     else:
         translate = translate
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -218,16 +222,20 @@ class Arc1(Arc):
         is_trigo_direction=True,
         label="",
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -241,7 +249,7 @@ class Arc1(Arc):
                 is_trigo_direction = init_dict["is_trigo_direction"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.begin = begin
         self.end = end
         self.radius = radius
@@ -252,7 +260,7 @@ class Arc1(Arc):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Arc1_str = ""
         # Get the properties inherited from Arc
@@ -283,8 +291,7 @@ class Arc1(Arc):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Arc
         Arc1_dict = super(Arc1, self).as_dict()
@@ -292,7 +299,7 @@ class Arc1(Arc):
         Arc1_dict["end"] = self.end
         Arc1_dict["radius"] = self.radius
         Arc1_dict["is_trigo_direction"] = self.is_trigo_direction
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Arc1_dict["__class__"] = "Arc1"
         return Arc1_dict
@@ -316,10 +323,13 @@ class Arc1(Arc):
         check_var("begin", value, "complex")
         self._begin = value
 
-    # begin point of the arc
-    # Type : complex
     begin = property(
-        fget=_get_begin, fset=_set_begin, doc=u"""begin point of the arc"""
+        fget=_get_begin,
+        fset=_set_begin,
+        doc=u"""begin point of the arc
+
+        :Type: complex
+        """,
     )
 
     def _get_end(self):
@@ -331,9 +341,14 @@ class Arc1(Arc):
         check_var("end", value, "complex")
         self._end = value
 
-    # end point of the arc
-    # Type : complex
-    end = property(fget=_get_end, fset=_set_end, doc=u"""end point of the arc""")
+    end = property(
+        fget=_get_end,
+        fset=_set_end,
+        doc=u"""end point of the arc
+
+        :Type: complex
+        """,
+    )
 
     def _get_radius(self):
         """getter of radius"""
@@ -344,10 +359,13 @@ class Arc1(Arc):
         check_var("radius", value, "float")
         self._radius = value
 
-    # Radius of the arc (can be + or -)
-    # Type : float
     radius = property(
-        fget=_get_radius, fset=_set_radius, doc=u"""Radius of the arc (can be + or -)"""
+        fget=_get_radius,
+        fset=_set_radius,
+        doc=u"""Radius of the arc (can be + or -)
+
+        :Type: float
+        """,
     )
 
     def _get_is_trigo_direction(self):
@@ -359,10 +377,11 @@ class Arc1(Arc):
         check_var("is_trigo_direction", value, "bool")
         self._is_trigo_direction = value
 
-    # Rotation direction of the arc
-    # Type : bool
     is_trigo_direction = property(
         fget=_get_is_trigo_direction,
         fset=_set_is_trigo_direction,
-        doc=u"""Rotation direction of the arc""",
+        doc=u"""Rotation direction of the arc
+
+        :Type: bool
+        """,
     )

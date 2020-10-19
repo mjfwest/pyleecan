@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/CondType11.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/CondType11.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/CondType11
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Conductor import Conductor
 
 # Import all class method
@@ -102,9 +106,9 @@ class CondType11(Conductor):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -121,20 +125,20 @@ class CondType11(Conductor):
         cond_mat=-1,
         ins_mat=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if cond_mat == -1:
-            cond_mat = Material()
-        if ins_mat == -1:
-            ins_mat = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -158,7 +162,7 @@ class CondType11(Conductor):
                 cond_mat = init_dict["cond_mat"]
             if "ins_mat" in list(init_dict.keys()):
                 ins_mat = init_dict["ins_mat"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Hwire = Hwire
         self.Wwire = Wwire
         self.Nwppc_rad = Nwppc_rad
@@ -173,7 +177,7 @@ class CondType11(Conductor):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         CondType11_str = ""
         # Get the properties inherited from Conductor
@@ -218,8 +222,7 @@ class CondType11(Conductor):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Conductor
         CondType11_dict = super(CondType11, self).as_dict()
@@ -231,7 +234,7 @@ class CondType11(Conductor):
         CondType11_dict["Wins_coil"] = self.Wins_coil
         CondType11_dict["type_winding_shape"] = self.type_winding_shape
         CondType11_dict["alpha_ew"] = self.alpha_ew
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         CondType11_dict["__class__"] = "CondType11"
         return CondType11_dict
@@ -259,12 +262,14 @@ class CondType11(Conductor):
         check_var("Hwire", value, "float", Vmin=0)
         self._Hwire = value
 
-    # cf schematics, single wire height without insulation [m]
-    # Type : float, min = 0
     Hwire = property(
         fget=_get_Hwire,
         fset=_set_Hwire,
-        doc=u"""cf schematics, single wire height without insulation [m]""",
+        doc=u"""cf schematics, single wire height without insulation [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Wwire(self):
@@ -276,12 +281,14 @@ class CondType11(Conductor):
         check_var("Wwire", value, "float", Vmin=0)
         self._Wwire = value
 
-    # cf schematics, single wire width without insulation [m]
-    # Type : float, min = 0
     Wwire = property(
         fget=_get_Wwire,
         fset=_set_Wwire,
-        doc=u"""cf schematics, single wire width without insulation [m]""",
+        doc=u"""cf schematics, single wire width without insulation [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Nwppc_rad(self):
@@ -293,12 +300,14 @@ class CondType11(Conductor):
         check_var("Nwppc_rad", value, "int", Vmin=1)
         self._Nwppc_rad = value
 
-    # cf schematics, stator winding number of preformed wires (strands) in parallel per coil along radial (vertical) direction
-    # Type : int, min = 1
     Nwppc_rad = property(
         fget=_get_Nwppc_rad,
         fset=_set_Nwppc_rad,
-        doc=u"""cf schematics, stator winding number of preformed wires (strands) in parallel per coil along radial (vertical) direction""",
+        doc=u"""cf schematics, stator winding number of preformed wires (strands) in parallel per coil along radial (vertical) direction
+
+        :Type: int
+        :min: 1
+        """,
     )
 
     def _get_Nwppc_tan(self):
@@ -310,12 +319,14 @@ class CondType11(Conductor):
         check_var("Nwppc_tan", value, "int", Vmin=1)
         self._Nwppc_tan = value
 
-    # cf schematics, stator winding number of preformed wires (strands) in parallel per coil along tangential (horizontal) direction
-    # Type : int, min = 1
     Nwppc_tan = property(
         fget=_get_Nwppc_tan,
         fset=_set_Nwppc_tan,
-        doc=u"""cf schematics, stator winding number of preformed wires (strands) in parallel per coil along tangential (horizontal) direction""",
+        doc=u"""cf schematics, stator winding number of preformed wires (strands) in parallel per coil along tangential (horizontal) direction
+
+        :Type: int
+        :min: 1
+        """,
     )
 
     def _get_Wins_wire(self):
@@ -327,12 +338,14 @@ class CondType11(Conductor):
         check_var("Wins_wire", value, "float", Vmin=0)
         self._Wins_wire = value
 
-    # (advanced) cf schematics, winding strand insulation thickness [m]
-    # Type : float, min = 0
     Wins_wire = property(
         fget=_get_Wins_wire,
         fset=_set_Wins_wire,
-        doc=u"""(advanced) cf schematics, winding strand insulation thickness [m]""",
+        doc=u"""(advanced) cf schematics, winding strand insulation thickness [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Wins_coil(self):
@@ -344,12 +357,14 @@ class CondType11(Conductor):
         check_var("Wins_coil", value, "float", Vmin=0)
         self._Wins_coil = value
 
-    # (advanced) cf schematics, winding coil insulation  thickness [m]
-    # Type : float, min = 0
     Wins_coil = property(
         fget=_get_Wins_coil,
         fset=_set_Wins_coil,
-        doc=u"""(advanced) cf schematics, winding coil insulation  thickness [m]""",
+        doc=u"""(advanced) cf schematics, winding coil insulation  thickness [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_type_winding_shape(self):
@@ -361,12 +376,15 @@ class CondType11(Conductor):
         check_var("type_winding_shape", value, "int", Vmin=0, Vmax=1)
         self._type_winding_shape = value
 
-    # type of winding shape for end winding length calculation\n0 for hairpin windings\n1 for normal windings
-    # Type : int, min = 0, max = 1
     type_winding_shape = property(
         fget=_get_type_winding_shape,
         fset=_set_type_winding_shape,
-        doc=u"""type of winding shape for end winding length calculation\n0 for hairpin windings\n1 for normal windings""",
+        doc=u"""type of winding shape for end winding length calculation\n0 for hairpin windings\n1 for normal windings
+
+        :Type: int
+        :min: 0
+        :max: 1
+        """,
     )
 
     def _get_alpha_ew(self):
@@ -378,10 +396,13 @@ class CondType11(Conductor):
         check_var("alpha_ew", value, "float", Vmin=0, Vmax=180)
         self._alpha_ew = value
 
-    # angle of winding overhang hairpin coils [deg]
-    # Type : float, min = 0, max = 180
     alpha_ew = property(
         fget=_get_alpha_ew,
         fset=_set_alpha_ew,
-        doc=u"""angle of winding overhang hairpin coils [deg]""",
+        doc=u"""angle of winding overhang hairpin coils [deg]
+
+        :Type: float
+        :min: 0
+        :max: 180
+        """,
     )

@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QMessageBox, QWidget
 
 from .....GUI.Dialog.DMachineSetup.SWindParam.Gen_SWindParam import Gen_SWindParam
 
 
 class SWindParam(Gen_SWindParam, QWidget):
-    """Step to define the winding parameters
-    """
+    """Step to define the winding parameters"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for DMachineSetup nav
     step_name = "Winding Parameter"
 
-    def __init__(self, machine, matlib=[], is_stator=False):
+    def __init__(self, machine, matlib, is_stator=False):
         """Initialize the GUI according to machine
 
         Parameters
@@ -24,8 +23,8 @@ class SWindParam(Gen_SWindParam, QWidget):
             A SWindParam widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         is_stator : bool
             To adapt the GUI to set either the stator or the rotor
         """
@@ -140,10 +139,13 @@ class SWindParam(Gen_SWindParam, QWidget):
             Error message (return None if no error)
         """
 
-        obj = lamination.winding  # For readibility
+        try:
+            obj = lamination.winding  # For readibility
 
-        # Check that everything is set
-        if obj.Ntcoil is None:
-            return "You must set Ntcoil !"
-        if obj.Npcpp is None:
-            return "You must set Npcpp !"
+            # Check that everything is set
+            if obj.Ntcoil is None:
+                return "You must set Ntcoil !"
+            if obj.Npcpp is None:
+                return "You must set Npcpp !"
+        except Exception as e:
+            return str(e)

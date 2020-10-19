@@ -2,7 +2,6 @@
 """File generated according to PMagnet10/gen_list.json
 WARNING! All changes made in this file will be lost!
 """
-
 from pyleecan.GUI.Dialog.DMachineSetup.SMagnet.PMagnet10.Ui_PMagnet10 import (
     Ui_PMagnet10,
 )
@@ -10,8 +9,7 @@ from pyleecan.GUI.Dialog.DMachineSetup.SMagnet.PMagnet10.Ui_PMagnet10 import (
 
 class Gen_PMagnet10(Ui_PMagnet10):
     def setupUi(self, PMagnet10):
-        """Abstract class to update the widget according to the csv doc
-        """
+        """Abstract class to update the widget according to the csv doc"""
         Ui_PMagnet10.setupUi(self, PMagnet10)
         # Setup of in_Hmag
         txt = self.tr(u"""magnet radial height [m]""")

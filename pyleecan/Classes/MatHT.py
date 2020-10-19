@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Material/MatHT.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Material/MatHT.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Material/MatHT
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 from ._check import InitUnKnowClassError
@@ -18,24 +22,34 @@ class MatHT(FrozenClass):
 
     VERSION = 1
 
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, lambda_x=1, lambda_y=1, lambda_z=1, Cp=1, alpha=0.00393, init_dict=None
+        self,
+        lambda_x=1,
+        lambda_y=1,
+        lambda_z=1,
+        Cp=1,
+        alpha=0.00393,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -49,7 +63,7 @@ class MatHT(FrozenClass):
                 Cp = init_dict["Cp"]
             if "alpha" in list(init_dict.keys()):
                 alpha = init_dict["alpha"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.lambda_x = lambda_x
         self.lambda_y = lambda_y
@@ -61,7 +75,7 @@ class MatHT(FrozenClass):
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MatHT_str = ""
         if self.parent is None:
@@ -93,8 +107,7 @@ class MatHT(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         MatHT_dict = dict()
         MatHT_dict["lambda_x"] = self.lambda_x
@@ -102,7 +115,7 @@ class MatHT(FrozenClass):
         MatHT_dict["lambda_z"] = self.lambda_z
         MatHT_dict["Cp"] = self.Cp
         MatHT_dict["alpha"] = self.alpha
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         MatHT_dict["__class__"] = "MatHT"
         return MatHT_dict
 
@@ -124,12 +137,14 @@ class MatHT(FrozenClass):
         check_var("lambda_x", value, "float", Vmin=0)
         self._lambda_x = value
 
-    # thermal conductivity (XY is lamination plane, Z is rotation axis)
-    # Type : float, min = 0
     lambda_x = property(
         fget=_get_lambda_x,
         fset=_set_lambda_x,
-        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)""",
+        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_lambda_y(self):
@@ -141,12 +156,14 @@ class MatHT(FrozenClass):
         check_var("lambda_y", value, "float", Vmin=0)
         self._lambda_y = value
 
-    # thermal conductivity (XY is lamination plane, Z is rotation axis)
-    # Type : float, min = 0
     lambda_y = property(
         fget=_get_lambda_y,
         fset=_set_lambda_y,
-        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)""",
+        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_lambda_z(self):
@@ -158,12 +175,14 @@ class MatHT(FrozenClass):
         check_var("lambda_z", value, "float", Vmin=0)
         self._lambda_z = value
 
-    # thermal conductivity (XY is lamination plane, Z is rotation axis)
-    # Type : float, min = 0
     lambda_z = property(
         fget=_get_lambda_z,
         fset=_set_lambda_z,
-        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)""",
+        doc=u"""thermal conductivity (XY is lamination plane, Z is rotation axis)
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Cp(self):
@@ -175,9 +194,15 @@ class MatHT(FrozenClass):
         check_var("Cp", value, "float", Vmin=0)
         self._Cp = value
 
-    # specific heat capacity
-    # Type : float, min = 0
-    Cp = property(fget=_get_Cp, fset=_set_Cp, doc=u"""specific heat capacity""")
+    Cp = property(
+        fget=_get_Cp,
+        fset=_set_Cp,
+        doc=u"""specific heat capacity
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_alpha(self):
         """getter of alpha"""
@@ -188,8 +213,12 @@ class MatHT(FrozenClass):
         check_var("alpha", value, "float", Vmin=0)
         self._alpha = value
 
-    # thermal expansion coefficient
-    # Type : float, min = 0
     alpha = property(
-        fget=_get_alpha, fset=_set_alpha, doc=u"""thermal expansion coefficient"""
+        fget=_get_alpha,
+        fset=_set_alpha,
+        doc=u"""thermal expansion coefficient
+
+        :Type: float
+        :min: 0
+        """,
     )

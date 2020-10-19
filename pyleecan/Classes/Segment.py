@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Segment.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Segment.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Segment
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Line import Line
 
 # Import all class method
@@ -76,6 +80,16 @@ try:
     from ..Methods.Geometry.Segment.translate import translate
 except ImportError as error:
     translate = error
+
+try:
+    from ..Methods.Geometry.Segment.is_on_line import is_on_line
+except ImportError as error:
+    is_on_line = error
+
+try:
+    from ..Methods.Geometry.Segment.comp_distance import comp_distance
+except ImportError as error:
+    comp_distance = error
 
 
 from ._check import InitUnKnowClassError
@@ -206,22 +220,45 @@ class Segment(Line):
         )
     else:
         translate = translate
-    # save method is available in all object
+    # cf Methods.Geometry.Segment.is_on_line
+    if isinstance(is_on_line, ImportError):
+        is_on_line = property(
+            fget=lambda x: raise_(
+                ImportError("Can't use Segment method is_on_line: " + str(is_on_line))
+            )
+        )
+    else:
+        is_on_line = is_on_line
+    # cf Methods.Geometry.Segment.comp_distance
+    if isinstance(comp_distance, ImportError):
+        comp_distance = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use Segment method comp_distance: " + str(comp_distance)
+                )
+            )
+        )
+    else:
+        comp_distance = comp_distance
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, begin=0, end=0, label="", init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(self, begin=0, end=0, label="", init_dict=None, init_str=None):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -231,7 +268,7 @@ class Segment(Line):
                 end = init_dict["end"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.begin = begin
         self.end = end
         # Call Line init
@@ -240,7 +277,7 @@ class Segment(Line):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Segment_str = ""
         # Get the properties inherited from Line
@@ -265,14 +302,13 @@ class Segment(Line):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Line
         Segment_dict = super(Segment, self).as_dict()
         Segment_dict["begin"] = self.begin
         Segment_dict["end"] = self.end
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Segment_dict["__class__"] = "Segment"
         return Segment_dict
@@ -294,10 +330,13 @@ class Segment(Line):
         check_var("begin", value, "complex")
         self._begin = value
 
-    # begin point of the line
-    # Type : complex
     begin = property(
-        fget=_get_begin, fset=_set_begin, doc=u"""begin point of the line"""
+        fget=_get_begin,
+        fset=_set_begin,
+        doc=u"""begin point of the line
+
+        :Type: complex
+        """,
     )
 
     def _get_end(self):
@@ -309,6 +348,11 @@ class Segment(Line):
         check_var("end", value, "complex")
         self._end = value
 
-    # end point of the line
-    # Type : complex
-    end = property(fget=_get_end, fset=_set_end, doc=u"""end point of the line""")
+    end = property(
+        fget=_get_end,
+        fset=_set_end,
+        doc=u"""end point of the line
+
+        :Type: complex
+        """,
+    )

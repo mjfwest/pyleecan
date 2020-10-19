@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QWidget
 
 from ......Classes.CondType21 import CondType21
 from ......GUI import gui_option
@@ -11,16 +11,15 @@ from ......GUI.Dialog.DMachineSetup.SBar.PCondType21.Gen_PCondType21 import (
 
 
 class PCondType21(Gen_PCondType21, QWidget):
-    """Page to setup Conductor Type 21
-    """
+    """Page to setup Conductor Type 21"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for SBar combobox
     cond_name = "Rectangular bar"
     cond_type = CondType21
 
-    def __init__(self, machine=None, matlib=[]):
+    def __init__(self, machine=None, matlib=None):
         """Initialize the widget according to machine
 
         Parameters
@@ -29,8 +28,8 @@ class PCondType21(Gen_PCondType21, QWidget):
             A PCondType21 widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         """
         # Build the interface according to the .ui file
         QWidget.__init__(self)
@@ -62,7 +61,7 @@ class PCondType21(Gen_PCondType21, QWidget):
         self.lf_Hbar.setValue(conductor.Hbar)
         self.lf_Wbar.setValue(conductor.Wbar)
 
-        self.w_mat.update(conductor, "cond_mat", matlib)
+        self.w_mat.update(conductor, "cond_mat", self.matlib)
 
         # Display the main output
         self.w_out.comp_output()
@@ -73,8 +72,7 @@ class PCondType21(Gen_PCondType21, QWidget):
         self.w_mat.saveNeeded.connect(self.emit_save)
 
     def emit_save(self):
-        """Emit the saveNeeded signal
-        """
+        """Emit the saveNeeded signal"""
         self.saveNeeded.emit()
 
     def set_Hbar(self):

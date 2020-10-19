@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QWidget
 
 from .....GUI import gui_option
 from .....GUI.Dialog.DMachineSetup.SBar.Gen_SBar import Gen_SBar
@@ -16,15 +16,14 @@ COND_NAME = [wid.cond_name for wid in WIDGET_LIST]
 
 
 class SBar(Gen_SBar, QWidget):
-    """Step to setup the Rotor Bar for SCIM machine
-    """
+    """Step to setup the Rotor Bar for SCIM machine"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for the DMachineSetup nav
     step_name = "Bar"
 
-    def __init__(self, machine, matlib=[], is_stator=False):
+    def __init__(self, machine, matlib, is_stator=False):
         """Initialize the widget according to machine
 
         Parameters
@@ -33,8 +32,8 @@ class SBar(Gen_SBar, QWidget):
             A SBar widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         is_stator : bool
             To adapt the GUI to set either the stator or the rotor
         """
@@ -60,7 +59,7 @@ class SBar(Gen_SBar, QWidget):
         # Set materials
         self.w_mat.def_mat = "Copper1"
         self.w_mat.setText("Ring material:")
-        self.w_mat.update(self.machine.rotor, "ring_mat", matlib)
+        self.w_mat.update(self.machine.rotor, "ring_mat", self.matlib)
 
         # Initialize the GUI with the current machine value
         self.lf_Hscr.setValue(machine.rotor.Hscr)
@@ -94,8 +93,7 @@ class SBar(Gen_SBar, QWidget):
         self.w_mat.saveNeeded.connect(self.emit_save)
 
     def emit_save(self):
-        """Emit the saveNeeded signal
-        """
+        """Emit the saveNeeded signal"""
         self.saveNeeded.emit()
 
     def set_Hscr(self):
@@ -169,3 +167,35 @@ class SBar(Gen_SBar, QWidget):
             A SBar object
         """
         self.machine.plot()
+
+    @staticmethod
+    def check(lamination):
+        """Check that the current machine have all the needed field set
+
+        Parameters
+        ----------
+        lamination : Lamination
+            Lamination to check
+
+        Returns
+        -------
+        error : str
+            Error message (return None if no error)
+        """
+
+        try:
+            # Check that everything is set
+            if lamination.Hscr is None:
+                return "You must set Hscr !"
+            elif lamination.Lscr is None:
+                return "You must set Lscr !"
+            elif lamination.winding.Lewout is None:
+                return "You must set Lewout !"
+
+            if type(lamination.winding.conductor) is INIT_INDEX[0]:
+                if lamination.winding.conductor.Hbar is None:
+                    return "You must set Hbar !"
+                elif lamination.winding.conductor.Wbar is None:
+                    return "You must set Wbar !"
+        except Exception as e:
+            return str(e)

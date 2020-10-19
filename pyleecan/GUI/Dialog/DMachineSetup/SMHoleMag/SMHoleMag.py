@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox, QWidget, QSizePolicy
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QMessageBox, QWidget, QSizePolicy
 
 from .....Classes.HoleM50 import HoleM50
 from .....Classes.Material import Material
 from .....GUI.Dialog.DMachineSetup.SMHoleMag.Ui_SMHoleMag import Ui_SMHoleMag
 from .....GUI.Dialog.DMachineSetup.SMHoleMag.WHoleMag.WHoleMag import WHoleMag
+from .....Methods.Slot.Slot.check import SlotCheckError
 
 
 class SMHoleMag(Ui_SMHoleMag, QWidget):
-    """Step to set several Holes
-    """
+    """Step to set several Holes"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for DMachineSetup
     step_name = "Slot"
 
-    def __init__(self, machine, matlib=[], is_stator=False):
+    def __init__(self, machine, matlib, is_stator=False):
         """Initialize the widget according to machine
 
         Parameters
@@ -28,8 +28,8 @@ class SMHoleMag(Ui_SMHoleMag, QWidget):
             A SMHoleMag widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         is_stator : bool
             To adapt the GUI to set either the stator or the rotor
         """
@@ -76,8 +76,7 @@ class SMHoleMag(Ui_SMHoleMag, QWidget):
         self.b_plot.clicked.connect(self.s_plot)
 
     def emit_save(self):
-        """Send a saveNeeded signal to the DMachineSetup
-        """
+        """Send a saveNeeded signal to the DMachineSetup"""
         self.saveNeeded.emit()
 
     def set_hole_pitch(self, Zh):
@@ -150,37 +149,37 @@ class SMHoleMag(Ui_SMHoleMag, QWidget):
         self : SMHoleMag
             a SMHoleMag object
         """
+        # Update p
+        for hole in self.obj.hole:
+            hole.Zh = self.machine.stator.winding.p * 2
+        self.set_hole_pitch(self.obj.hole[0].Zh)
+
         # We have to make sure the hole is right before truing to plot it
-        error = self.check()
+        error = self.check(self.obj)
 
         if error:  # Error => Display it
             QMessageBox().critical(self, self.tr("Error"), error)
         else:  # No error => Plot the hole (No winding for LamSquirrelCage)
             self.machine.plot()
 
-    def check(self):
+    @staticmethod
+    def check(lamination):
         """Check that the current machine have all the needed field set
 
         Parameters
         ----------
-        self : SMHoleMag
-            A SMHoleMag object
+        lamination : Lamination
+            Lamination to check
 
         Returns
         -------
-        error: str
+        error : str
             Error message (return None if no error)
         """
 
         # Check that everything is set
-        for hole in self.obj.hole:
-            hole.Zh = self.machine.stator.winding.p * 2
-
-        self.set_hole_pitch(self.obj.hole[0].Zh)
-
-        # Call the check method of the current page (every hole type have a
-        # different check method)
-        for ii in range(self.tab_hole.count()):
-            error = self.tab_hole.widget(ii).check()
-            if error is not None:
-                return "Slot " + str(ii + 1) + ": " + error
+        for hole in lamination.hole:
+            try:
+                hole.check()
+            except SlotCheckError as error:
+                return str(error)

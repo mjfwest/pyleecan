@@ -2,14 +2,12 @@
 """File generated according to SWindPat/gen_list.json
 WARNING! All changes made in this file will be lost!
 """
-
 from pyleecan.GUI.Dialog.DMachineSetup.SWindPat.Ui_SWindPat import Ui_SWindPat
 
 
 class Gen_SWindPat(Ui_SWindPat):
     def setupUi(self, SWindPat):
-        """Abstract class to update the widget according to the csv doc
-        """
+        """Abstract class to update the widget according to the csv doc"""
         Ui_SWindPat.setupUi(self, SWindPat)
         # Setup of in_qs
         txt = self.tr(u"""number of phases """)

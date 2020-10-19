@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/SlotUD.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/SlotUD.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/SlotUD
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Slot import Slot
 
 # Import all class method
@@ -37,22 +41,27 @@ class SlotUD(Slot):
         )
     else:
         build_geometry = build_geometry
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, point_list=[], is_sym=False, Zs=36, init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(
+        self, point_list=-1, is_sym=False, Zs=36, init_dict=None, init_str=None
+    ):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -62,7 +71,7 @@ class SlotUD(Slot):
                 is_sym = init_dict["is_sym"]
             if "Zs" in list(init_dict.keys()):
                 Zs = init_dict["Zs"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.point_list = point_list
         self.is_sym = is_sym
         # Call Slot init
@@ -71,7 +80,7 @@ class SlotUD(Slot):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         SlotUD_str = ""
         # Get the properties inherited from Slot
@@ -101,14 +110,15 @@ class SlotUD(Slot):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Slot
         SlotUD_dict = super(SlotUD, self).as_dict()
-        SlotUD_dict["point_list"] = self.point_list
+        SlotUD_dict["point_list"] = (
+            self.point_list.copy() if self.point_list is not None else None
+        )
         SlotUD_dict["is_sym"] = self.is_sym
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         SlotUD_dict["__class__"] = "SlotUD"
         return SlotUD_dict
@@ -127,15 +137,18 @@ class SlotUD(Slot):
 
     def _set_point_list(self, value):
         """setter of point_list"""
+        if type(value) is int and value == -1:
+            value = list()
         check_var("point_list", value, "list")
         self._point_list = value
 
-    # Coordinates of the slot points (will be connected in order with Segments)
-    # Type : list
     point_list = property(
         fget=_get_point_list,
         fset=_set_point_list,
-        doc=u"""Coordinates of the slot points (will be connected in order with Segments)""",
+        doc=u"""Coordinates of the slot points (will be connected in order with Segments)
+
+        :Type: list
+        """,
     )
 
     def _get_is_sym(self):
@@ -147,10 +160,11 @@ class SlotUD(Slot):
         check_var("is_sym", value, "bool")
         self._is_sym = value
 
-    # True to enter only half of the point coordinates
-    # Type : bool
     is_sym = property(
         fget=_get_is_sym,
         fset=_set_is_sym,
-        doc=u"""True to enter only half of the point coordinates""",
+        doc=u"""True to enter only half of the point coordinates
+
+        :Type: bool
+        """,
     )

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Trapeze.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Trapeze.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Trapeze
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Surface import Surface
 
 # Import all class method
@@ -152,22 +156,27 @@ class Trapeze(Surface):
         )
     else:
         comp_point_ref = comp_point_ref
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, height=1, W2=1, W1=1, point_ref=0, label="", init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(
+        self, height=1, W2=1, W1=1, point_ref=0, label="", init_dict=None, init_str=None
+    ):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -181,7 +190,7 @@ class Trapeze(Surface):
                 point_ref = init_dict["point_ref"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.height = height
         self.W2 = W2
         self.W1 = W1
@@ -191,7 +200,7 @@ class Trapeze(Surface):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Trapeze_str = ""
         # Get the properties inherited from Surface
@@ -219,15 +228,14 @@ class Trapeze(Surface):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Surface
         Trapeze_dict = super(Trapeze, self).as_dict()
         Trapeze_dict["height"] = self.height
         Trapeze_dict["W2"] = self.W2
         Trapeze_dict["W1"] = self.W1
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Trapeze_dict["__class__"] = "Trapeze"
         return Trapeze_dict
@@ -250,10 +258,14 @@ class Trapeze(Surface):
         check_var("height", value, "float", Vmin=0)
         self._height = value
 
-    # the height of the Trapeze
-    # Type : float, min = 0
     height = property(
-        fget=_get_height, fset=_set_height, doc=u"""the height of the Trapeze"""
+        fget=_get_height,
+        fset=_set_height,
+        doc=u"""the height of the Trapeze
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_W2(self):
@@ -265,9 +277,15 @@ class Trapeze(Surface):
         check_var("W2", value, "float", Vmin=0)
         self._W2 = value
 
-    # the big base of Trapeze
-    # Type : float, min = 0
-    W2 = property(fget=_get_W2, fset=_set_W2, doc=u"""the big base of Trapeze""")
+    W2 = property(
+        fget=_get_W2,
+        fset=_set_W2,
+        doc=u"""the big base of Trapeze
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W1(self):
         """getter of W1"""
@@ -278,6 +296,12 @@ class Trapeze(Surface):
         check_var("W1", value, "float", Vmin=0)
         self._W1 = value
 
-    # the small base of the Trapeze
-    # Type : float, min = 0
-    W1 = property(fget=_get_W1, fset=_set_W1, doc=u"""the small base of the Trapeze""")
+    W1 = property(
+        fget=_get_W1,
+        fset=_set_W1,
+        doc=u"""the small base of the Trapeze
+
+        :Type: float
+        :min: 0
+        """,
+    )

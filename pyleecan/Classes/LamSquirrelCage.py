@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/LamSquirrelCage.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/LamSquirrelCage.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/LamSquirrelCage
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .LamSlotWind import LamSlotWind
 
 # Import all class method
@@ -31,6 +35,18 @@ try:
     from ..Methods.Machine.LamSquirrelCage.plot import plot
 except ImportError as error:
     plot = error
+
+try:
+    from ..Methods.Machine.LamSquirrelCage.comp_number_phase_eq import (
+        comp_number_phase_eq,
+    )
+except ImportError as error:
+    comp_number_phase_eq = error
+
+try:
+    from ..Methods.Machine.LamSquirrelCage.comp_periodicity import comp_periodicity
+except ImportError as error:
+    comp_periodicity = error
 
 
 from ._check import InitUnKnowClassError
@@ -89,9 +105,33 @@ class LamSquirrelCage(LamSlotWind):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # cf Methods.Machine.LamSquirrelCage.comp_number_phase_eq
+    if isinstance(comp_number_phase_eq, ImportError):
+        comp_number_phase_eq = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSquirrelCage method comp_number_phase_eq: "
+                    + str(comp_number_phase_eq)
+                )
+            )
+        )
+    else:
+        comp_number_phase_eq = comp_number_phase_eq
+    # cf Methods.Machine.LamSquirrelCage.comp_periodicity
+    if isinstance(comp_periodicity, ImportError):
+        comp_periodicity = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSquirrelCage method comp_periodicity: "
+                    + str(comp_periodicity)
+                )
+            )
+        )
+    else:
+        comp_periodicity = comp_periodicity
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -112,27 +152,23 @@ class LamSquirrelCage(LamSlotWind):
         Rint=0,
         Rext=1,
         is_stator=True,
-        axial_vent=list(),
-        notch=list(),
+        axial_vent=-1,
+        notch=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if ring_mat == -1:
-            ring_mat = Material()
-        if winding == -1:
-            winding = Winding()
-        if slot == -1:
-            slot = Slot()
-        if mat_type == -1:
-            mat_type = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -170,14 +206,10 @@ class LamSquirrelCage(LamSlotWind):
                 axial_vent = init_dict["axial_vent"]
             if "notch" in list(init_dict.keys()):
                 notch = init_dict["notch"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Hscr = Hscr
         self.Lscr = Lscr
-        # ring_mat can be None, a Material object or a dict
-        if isinstance(ring_mat, dict):
-            self.ring_mat = Material(init_dict=ring_mat)
-        else:
-            self.ring_mat = ring_mat
+        self.ring_mat = ring_mat
         # Call LamSlotWind init
         super(LamSquirrelCage, self).__init__(
             Ksfill=Ksfill,
@@ -199,7 +231,7 @@ class LamSquirrelCage(LamSlotWind):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         LamSquirrelCage_str = ""
         # Get the properties inherited from LamSlotWind
@@ -231,8 +263,7 @@ class LamSquirrelCage(LamSlotWind):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from LamSlotWind
         LamSquirrelCage_dict = super(LamSquirrelCage, self).as_dict()
@@ -242,7 +273,7 @@ class LamSquirrelCage(LamSlotWind):
             LamSquirrelCage_dict["ring_mat"] = None
         else:
             LamSquirrelCage_dict["ring_mat"] = self.ring_mat.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         LamSquirrelCage_dict["__class__"] = "LamSquirrelCage"
         return LamSquirrelCage_dict
@@ -266,12 +297,14 @@ class LamSquirrelCage(LamSlotWind):
         check_var("Hscr", value, "float", Vmin=0)
         self._Hscr = value
 
-    # short circuit ring section radial height [m]
-    # Type : float, min = 0
     Hscr = property(
         fget=_get_Hscr,
         fset=_set_Hscr,
-        doc=u"""short circuit ring section radial height [m]""",
+        doc=u"""short circuit ring section radial height [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Lscr(self):
@@ -283,12 +316,14 @@ class LamSquirrelCage(LamSlotWind):
         check_var("Lscr", value, "float", Vmin=0)
         self._Lscr = value
 
-    # short circuit ring section axial length
-    # Type : float, min = 0
     Lscr = property(
         fget=_get_Lscr,
         fset=_set_Lscr,
-        doc=u"""short circuit ring section axial length""",
+        doc=u"""short circuit ring section axial length
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_ring_mat(self):
@@ -297,16 +332,26 @@ class LamSquirrelCage(LamSlotWind):
 
     def _set_ring_mat(self, value):
         """setter of ring_mat"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "ring_mat"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = Material()
         check_var("ring_mat", value, "Material")
         self._ring_mat = value
 
         if self._ring_mat is not None:
             self._ring_mat.parent = self
 
-    # Material of the Rotor short circuit ring
-    # Type : Material
     ring_mat = property(
         fget=_get_ring_mat,
         fset=_set_ring_mat,
-        doc=u"""Material of the Rotor short circuit ring""",
+        doc=u"""Material of the Rotor short circuit ring
+
+        :Type: Material
+        """,
     )

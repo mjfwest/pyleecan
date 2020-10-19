@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/MachineSync.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/MachineSync.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/MachineSync
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Machine import Machine
 
 # Import all class method
@@ -16,11 +20,6 @@ try:
     from ..Methods.Machine.MachineSync.is_synchronous import is_synchronous
 except ImportError as error:
     is_synchronous = error
-
-try:
-    from ..Methods.Machine.MachineSync.comp_initial_angle import comp_initial_angle
-except ImportError as error:
-    comp_initial_angle = error
 
 
 from ._check import InitUnKnowClassError
@@ -33,7 +32,6 @@ class MachineSync(Machine):
 
     VERSION = 1
 
-    # Check ImportError to remove unnecessary dependencies in unused method
     # cf Methods.Machine.MachineSync.is_synchronous
     if isinstance(is_synchronous, ImportError):
         is_synchronous = property(
@@ -46,21 +44,9 @@ class MachineSync(Machine):
         )
     else:
         is_synchronous = is_synchronous
-    # cf Methods.Machine.MachineSync.comp_initial_angle
-    if isinstance(comp_initial_angle, ImportError):
-        comp_initial_angle = property(
-            fget=lambda x: raise_(
-                ImportError(
-                    "Can't use MachineSync method comp_initial_angle: "
-                    + str(comp_initial_angle)
-                )
-            )
-        )
-    else:
-        comp_initial_angle = comp_initial_angle
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -73,20 +59,20 @@ class MachineSync(Machine):
         type_machine=1,
         logger_name="Pyleecan.Machine",
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if frame == -1:
-            frame = Frame()
-        if shaft == -1:
-            shaft = Shaft()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -102,7 +88,7 @@ class MachineSync(Machine):
                 type_machine = init_dict["type_machine"]
             if "logger_name" in list(init_dict.keys()):
                 logger_name = init_dict["logger_name"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         # Call Machine init
         super(MachineSync, self).__init__(
             frame=frame,
@@ -116,7 +102,7 @@ class MachineSync(Machine):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MachineSync_str = ""
         # Get the properties inherited from Machine
@@ -135,12 +121,11 @@ class MachineSync(Machine):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Machine
         MachineSync_dict = super(MachineSync, self).as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         MachineSync_dict["__class__"] = "MachineSync"
         return MachineSync_dict

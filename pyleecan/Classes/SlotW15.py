@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/SlotW15.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/SlotW15.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/SlotW15
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .SlotWind import SlotWind
 
 # Import all class method
@@ -150,9 +154,9 @@ class SlotW15(SlotWind):
         )
     else:
         comp_surface = comp_surface
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -167,16 +171,20 @@ class SlotW15(SlotWind):
         R2=0.001,
         Zs=36,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -196,7 +204,7 @@ class SlotW15(SlotWind):
                 R2 = init_dict["R2"]
             if "Zs" in list(init_dict.keys()):
                 Zs = init_dict["Zs"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.W0 = W0
         self.W3 = W3
         self.H0 = H0
@@ -210,7 +218,7 @@ class SlotW15(SlotWind):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         SlotW15_str = ""
         # Get the properties inherited from SlotWind
@@ -250,8 +258,7 @@ class SlotW15(SlotWind):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from SlotWind
         SlotW15_dict = super(SlotW15, self).as_dict()
@@ -262,7 +269,7 @@ class SlotW15(SlotWind):
         SlotW15_dict["H2"] = self.H2
         SlotW15_dict["R1"] = self.R1
         SlotW15_dict["R2"] = self.R2
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         SlotW15_dict["__class__"] = "SlotW15"
         return SlotW15_dict
@@ -289,9 +296,15 @@ class SlotW15(SlotWind):
         check_var("W0", value, "float", Vmin=0)
         self._W0 = value
 
-    # Slot isthmus width.
-    # Type : float, min = 0
-    W0 = property(fget=_get_W0, fset=_set_W0, doc=u"""Slot isthmus width.""")
+    W0 = property(
+        fget=_get_W0,
+        fset=_set_W0,
+        doc=u"""Slot isthmus width.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W3(self):
         """getter of W3"""
@@ -302,9 +315,15 @@ class SlotW15(SlotWind):
         check_var("W3", value, "float", Vmin=0)
         self._W3 = value
 
-    # Tooth width
-    # Type : float, min = 0
-    W3 = property(fget=_get_W3, fset=_set_W3, doc=u"""Tooth width""")
+    W3 = property(
+        fget=_get_W3,
+        fset=_set_W3,
+        doc=u"""Tooth width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H0(self):
         """getter of H0"""
@@ -315,9 +334,15 @@ class SlotW15(SlotWind):
         check_var("H0", value, "float", Vmin=0)
         self._H0 = value
 
-    # Slot isthmus height.
-    # Type : float, min = 0
-    H0 = property(fget=_get_H0, fset=_set_H0, doc=u"""Slot isthmus height.""")
+    H0 = property(
+        fget=_get_H0,
+        fset=_set_H0,
+        doc=u"""Slot isthmus height.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H1(self):
         """getter of H1"""
@@ -328,9 +353,15 @@ class SlotW15(SlotWind):
         check_var("H1", value, "float", Vmin=0)
         self._H1 = value
 
-    # Slot intermediate height.
-    # Type : float, min = 0
-    H1 = property(fget=_get_H1, fset=_set_H1, doc=u"""Slot intermediate height.""")
+    H1 = property(
+        fget=_get_H1,
+        fset=_set_H1,
+        doc=u"""Slot intermediate height.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H2(self):
         """getter of H2"""
@@ -341,9 +372,15 @@ class SlotW15(SlotWind):
         check_var("H2", value, "float", Vmin=0)
         self._H2 = value
 
-    # Slot height
-    # Type : float, min = 0
-    H2 = property(fget=_get_H2, fset=_set_H2, doc=u"""Slot height""")
+    H2 = property(
+        fget=_get_H2,
+        fset=_set_H2,
+        doc=u"""Slot height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_R1(self):
         """getter of R1"""
@@ -354,9 +391,15 @@ class SlotW15(SlotWind):
         check_var("R1", value, "float", Vmin=0)
         self._R1 = value
 
-    # Top radius
-    # Type : float, min = 0
-    R1 = property(fget=_get_R1, fset=_set_R1, doc=u"""Top radius""")
+    R1 = property(
+        fget=_get_R1,
+        fset=_set_R1,
+        doc=u"""Top radius
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_R2(self):
         """getter of R2"""
@@ -367,6 +410,12 @@ class SlotW15(SlotWind):
         check_var("R2", value, "float", Vmin=0)
         self._R2 = value
 
-    # Bottom radius
-    # Type : float, min = 0
-    R2 = property(fget=_get_R2, fset=_set_R2, doc=u"""Bottom radius""")
+    R2 = property(
+        fget=_get_R2,
+        fset=_set_R2,
+        doc=u"""Bottom radius
+
+        :Type: float
+        :min: 0
+        """,
+    )

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/LamSlotWind.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/LamSlotWind.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/LamSlotWind
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .LamSlot import LamSlot
 
 # Import all class method
@@ -71,6 +75,51 @@ try:
     from ..Methods.Machine.LamSlotWind.get_polar_eq import get_polar_eq
 except ImportError as error:
     get_polar_eq = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_wind_function import comp_wind_function
+except ImportError as error:
+    comp_wind_function = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.plot_mmf_unit import plot_mmf_unit
+except ImportError as error:
+    plot_mmf_unit = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_resistance_wind import comp_resistance_wind
+except ImportError as error:
+    comp_resistance_wind = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_angle_d_axis import comp_angle_d_axis
+except ImportError as error:
+    comp_angle_d_axis = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_mmf_unit import comp_mmf_unit
+except ImportError as error:
+    comp_mmf_unit = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_rot_dir import comp_rot_dir
+except ImportError as error:
+    comp_rot_dir = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_lengths_winding import comp_lengths_winding
+except ImportError as error:
+    comp_lengths_winding = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_number_phase_eq import comp_number_phase_eq
+except ImportError as error:
+    comp_number_phase_eq = error
+
+try:
+    from ..Methods.Machine.LamSlotWind.comp_periodicity import comp_periodicity
+except ImportError as error:
+    comp_periodicity = error
 
 
 from ._check import InitUnKnowClassError
@@ -220,9 +269,114 @@ class LamSlotWind(LamSlot):
         )
     else:
         get_polar_eq = get_polar_eq
-    # save method is available in all object
+    # cf Methods.Machine.LamSlotWind.comp_wind_function
+    if isinstance(comp_wind_function, ImportError):
+        comp_wind_function = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_wind_function: "
+                    + str(comp_wind_function)
+                )
+            )
+        )
+    else:
+        comp_wind_function = comp_wind_function
+    # cf Methods.Machine.LamSlotWind.plot_mmf_unit
+    if isinstance(plot_mmf_unit, ImportError):
+        plot_mmf_unit = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method plot_mmf_unit: " + str(plot_mmf_unit)
+                )
+            )
+        )
+    else:
+        plot_mmf_unit = plot_mmf_unit
+    # cf Methods.Machine.LamSlotWind.comp_resistance_wind
+    if isinstance(comp_resistance_wind, ImportError):
+        comp_resistance_wind = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_resistance_wind: "
+                    + str(comp_resistance_wind)
+                )
+            )
+        )
+    else:
+        comp_resistance_wind = comp_resistance_wind
+    # cf Methods.Machine.LamSlotWind.comp_angle_d_axis
+    if isinstance(comp_angle_d_axis, ImportError):
+        comp_angle_d_axis = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_angle_d_axis: "
+                    + str(comp_angle_d_axis)
+                )
+            )
+        )
+    else:
+        comp_angle_d_axis = comp_angle_d_axis
+    # cf Methods.Machine.LamSlotWind.comp_mmf_unit
+    if isinstance(comp_mmf_unit, ImportError):
+        comp_mmf_unit = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_mmf_unit: " + str(comp_mmf_unit)
+                )
+            )
+        )
+    else:
+        comp_mmf_unit = comp_mmf_unit
+    # cf Methods.Machine.LamSlotWind.comp_rot_dir
+    if isinstance(comp_rot_dir, ImportError):
+        comp_rot_dir = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_rot_dir: " + str(comp_rot_dir)
+                )
+            )
+        )
+    else:
+        comp_rot_dir = comp_rot_dir
+    # cf Methods.Machine.LamSlotWind.comp_lengths_winding
+    if isinstance(comp_lengths_winding, ImportError):
+        comp_lengths_winding = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_lengths_winding: "
+                    + str(comp_lengths_winding)
+                )
+            )
+        )
+    else:
+        comp_lengths_winding = comp_lengths_winding
+    # cf Methods.Machine.LamSlotWind.comp_number_phase_eq
+    if isinstance(comp_number_phase_eq, ImportError):
+        comp_number_phase_eq = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_number_phase_eq: "
+                    + str(comp_number_phase_eq)
+                )
+            )
+        )
+    else:
+        comp_number_phase_eq = comp_number_phase_eq
+    # cf Methods.Machine.LamSlotWind.comp_periodicity
+    if isinstance(comp_periodicity, ImportError):
+        comp_periodicity = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use LamSlotWind method comp_periodicity: "
+                    + str(comp_periodicity)
+                )
+            )
+        )
+    else:
+        comp_periodicity = comp_periodicity
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -240,25 +394,23 @@ class LamSlotWind(LamSlot):
         Rint=0,
         Rext=1,
         is_stator=True,
-        axial_vent=list(),
-        notch=list(),
+        axial_vent=-1,
+        notch=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if winding == -1:
-            winding = Winding()
-        if slot == -1:
-            slot = Slot()
-        if mat_type == -1:
-            mat_type = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -290,31 +442,9 @@ class LamSlotWind(LamSlot):
                 axial_vent = init_dict["axial_vent"]
             if "notch" in list(init_dict.keys()):
                 notch = init_dict["notch"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Ksfill = Ksfill
-        # winding can be None, a Winding object or a dict
-        if isinstance(winding, dict):
-            # Check that the type is correct (including daughter)
-            class_name = winding.get("__class__")
-            if class_name not in [
-                "Winding",
-                "WindingCW1L",
-                "WindingCW2LR",
-                "WindingCW2LT",
-                "WindingDW1L",
-                "WindingDW2L",
-                "WindingSC",
-                "WindingUD",
-            ]:
-                raise InitUnKnowClassError(
-                    "Unknow class name " + class_name + " in init_dict for winding"
-                )
-            # Dynamic import to call the correct constructor
-            module = __import__("pyleecan.Classes." + class_name, fromlist=[class_name])
-            class_obj = getattr(module, class_name)
-            self.winding = class_obj(init_dict=winding)
-        else:
-            self.winding = winding
+        self.winding = winding
         # Call LamSlot init
         super(LamSlotWind, self).__init__(
             slot=slot,
@@ -334,7 +464,7 @@ class LamSlotWind(LamSlot):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         LamSlotWind_str = ""
         # Get the properties inherited from LamSlot
@@ -363,8 +493,7 @@ class LamSlotWind(LamSlot):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from LamSlot
         LamSlotWind_dict = super(LamSlotWind, self).as_dict()
@@ -373,7 +502,7 @@ class LamSlotWind(LamSlot):
             LamSlotWind_dict["winding"] = None
         else:
             LamSlotWind_dict["winding"] = self.winding.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         LamSlotWind_dict["__class__"] = "LamSlotWind"
         return LamSlotWind_dict
@@ -396,12 +525,15 @@ class LamSlotWind(LamSlot):
         check_var("Ksfill", value, "float", Vmin=0, Vmax=1)
         self._Ksfill = value
 
-    # Imposed Slot Fill factor (if None, will be computed according to the winding and the slot)
-    # Type : float, min = 0, max = 1
     Ksfill = property(
         fget=_get_Ksfill,
         fset=_set_Ksfill,
-        doc=u"""Imposed Slot Fill factor (if None, will be computed according to the winding and the slot)""",
+        doc=u"""Imposed Slot Fill factor (if None, will be computed according to the winding and the slot)
+
+        :Type: float
+        :min: 0
+        :max: 1
+        """,
     )
 
     def _get_winding(self):
@@ -410,14 +542,26 @@ class LamSlotWind(LamSlot):
 
     def _set_winding(self, value):
         """setter of winding"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "winding"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = Winding()
         check_var("winding", value, "Winding")
         self._winding = value
 
         if self._winding is not None:
             self._winding.parent = self
 
-    # Lamination's Winding
-    # Type : Winding
     winding = property(
-        fget=_get_winding, fset=_set_winding, doc=u"""Lamination's Winding"""
+        fget=_get_winding,
+        fset=_set_winding,
+        doc=u"""Lamination's Winding
+
+        :Type: Winding
+        """,
     )

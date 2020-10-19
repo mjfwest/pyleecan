@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
+from .....Functions.Plot.plot_A_time import plot_A_time as plot_A_time_fct
+from .....Functions.Plot.plot_A_fft_time import plot_A_fft_time as plot_A_fft_time_fct
 from .....Functions.init_fig import init_fig
-from .....Functions.Plot.plot_A_2D import plot_A_2D
+from SciDataTool import VectorField
+
+from matplotlib.pyplot import subplots
+
 
 def plot_A_time(
     self,
     Data_str,
+    index_list=[0],
     alpha=None,
     alpha_index=0,
     is_fft=False,
@@ -13,7 +19,15 @@ def plot_A_time(
     freq_max=20000,
     is_norm=False,
     unit="SI",
-    out_list=[],
+    data_list=[],
+    component_list=None,
+    legend_list=[],
+    color_list=[],
+    save_path=None,
+    y_min=None,
+    y_max=None,
+    mag_max=None,
+    is_auto_ticks=True,
 ):
     """Plots a field as a function of time
 
@@ -23,6 +37,8 @@ def plot_A_time(
         an Output object
     Data_str : str
         name of the Data Object to plot (e.g. "mag.Br")
+    index_list : list
+        list of indices to take from a components axis
     alpha : float
         angle value at which to slice
     alpha_index : int
@@ -37,91 +53,113 @@ def plot_A_time(
         boolean indicating if the field must be normalized
     unit : str
         unit in which to plot the field
-    out_list : list
-        list of Output objects to compare
+    data_list : list
+        list of Data objects to compare
+    component_list : list
+        list of component names to plot in separate figures
+    legend_list : list
+        list of legends to use for each Data object (including reference one) instead of data.name
+    color_list : list
+        list of colors to use for each Data object
+    save_path : str
+        path and name of the png file to save
+    y_min : float
+        minimum value for the y-axis
+    y_max : float
+        maximum value for the y-axis
+    mag_max : float
+        maximum alue for the y-axis of the fft
+    is_auto_ticks : bool
+        in fft, adjust ticks to freqs (deactivate if too close)
     """
 
     # Get Data object names
-    Phys = getattr(self, Data_str.split(".")[0])
-    A = getattr(Phys, Data_str.split(".")[1])
-    B_list = []
-    for out in out_list:
-        Phys = getattr(out, Data_str.split(".")[0])
-        B_list.append(getattr(Phys, Data_str.split(".")[1]))
+    phys = getattr(self, Data_str.split(".")[0])
+    data = getattr(phys, Data_str.split(".")[1])
 
-    # Set plot
-    (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
-    legend_list = [self.post.legend_name]
-    for out in out_list:
-        legend_list.append(out.post.legend_name)
-    color_list = [self.post.line_color]
-    for out in out_list:
-        color_list.append(out.post.line_color)
-    xlabel = "Time [s]"
-    if unit == "SI":
-        unit = A.unit
-    if is_norm:
-        ylabel = r"$\frac{" + A.symbol + "}{" + A.symbol + "_0}\, [" + unit + "]$"
-    else:
-        ylabel = r"$" + A.symbol + "\, [" + unit + "]$"
-
-    # Extract the fields
-    if alpha != None:
-        alpha_str = "angle=" + str(alpha)
-    else:
-        alpha_str = "angle[" + str(alpha_index) + "]"
-
-    (time, Ydata) = A.compare_along(
-        "time", alpha_str, data_list=B_list, unit=unit, is_norm=is_norm
-    )
-
-    title = A.name + " over time at " + alpha_str
-
-    # Plot the original graph
-    plot_A_2D(
-        time,
-        Ydata,
-        legend_list=legend_list,
-        color_list=color_list,
-        fig=fig,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-    )
-
-    if is_fft:
-        title = "FFT of " + A.name
-        ylabel = r"$|\widehat{" + A.symbol + "}|\, [" + unit + "]$"
-
-        if is_elecorder:
-            elec_max = freq_max / A.normalizations.get("elec_order")
-            xlabel = "Electrical order []"
-            (freqs, Ydata) = A.compare_magnitude_along(
-                "freqs=[0," + str(elec_max) + "]{elec_order}",
-                alpha_str,
-                data_list=B_list,
-                unit=unit,
-                is_norm=False,
-            )
-
+    # Call the plot function
+    if isinstance(data, VectorField):
+        if component_list is None:  # default: extract all components
+            component_list = data.components.keys()
+        ncomp = len(component_list)
+        if is_fft:
+            fig, axs = subplots(2, ncomp, tight_layout=True, figsize=(20, 10))
+            for i, comp in enumerate(component_list):
+                plot_A_time_fct(
+                    data.components[comp],
+                    index_list=index_list,
+                    alpha=alpha,
+                    alpha_index=alpha_index,
+                    is_norm=is_norm,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    save_path=save_path,
+                    y_min=y_min,
+                    y_max=y_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i,
+                )
+                plot_A_fft_time_fct(
+                    data.components[comp],
+                    alpha=alpha,
+                    alpha_index=alpha_index,
+                    is_elecorder=is_elecorder,
+                    freq_max=freq_max,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    save_path=save_path,
+                    mag_max=mag_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i + ncomp,
+                )
         else:
-            xlabel = "Frequency [Hz]"
-            (freqs, Ydata) = A.compare_magnitude_along(
-                "freqs=[0," + str(freq_max) + "]",
-                alpha_str,
-                data_list=B_list,
-                unit=unit,
-                is_norm=False,
-            )
+            fig, axs = subplots(1, ncomp, tight_layout=True, figsize=(20, 10))
+            for i, comp in enumerate(component_list):
+                plot_A_time_fct(
+                    data.components[comp],
+                    index_list=index_list,
+                    alpha=alpha,
+                    alpha_index=alpha_index,
+                    is_norm=is_norm,
+                    unit=unit,
+                    data_list=[dat.components[comp] for dat in data_list],
+                    legend_list=legend_list,
+                    color_list=color_list,
+                    save_path=save_path,
+                    y_min=y_min,
+                    y_max=y_max,
+                    is_auto_ticks=is_auto_ticks,
+                    fig=fig,
+                    subplot_index=i,
+                )
 
-        plot_A_2D(
-            freqs,
-            Ydata,
+    else:
+        (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
+        plot_A_time_fct(
+            data,
+            index_list=index_list,
+            alpha=alpha,
+            alpha_index=alpha_index,
+            is_fft=is_fft,
+            is_elecorder=is_elecorder,
+            freq_max=freq_max,
+            is_norm=is_norm,
+            unit=unit,
+            data_list=data_list,
             legend_list=legend_list,
             color_list=color_list,
+            save_path=save_path,
+            y_min=y_min,
+            y_max=y_max,
+            mag_max=mag_max,
+            is_auto_ticks=is_auto_ticks,
             fig=fig,
-            title=title,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            type="bargraph",
         )
+
+    fig.show()

@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 import sys
-from os.path import dirname, join
+from os.path import dirname, join, isfile
 from sys import argv, exit
 
-from PyQt5.QtCore import QTranslator
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtGui import QIcon
+from PySide2.QtCore import QTranslator
+from PySide2.QtWidgets import QApplication
+from PySide2.QtGui import QIcon
 
 try:  # Import if pyleecan is installed with pip
-    from .definitions import ROOT_DIR, DATA_DIR, MATLIB_DIR, PACKAGE_NAME
+    from .definitions import ROOT_DIR, PACKAGE_NAME, config_dict
     from .GUI.Dialog.DMachineSetup.DMachineSetup import DMachineSetup
     from .GUI.Dialog.DMatLib.DMatLib import DMatLib
+    from .GUI.Dialog.DMatLib.MatLib import MatLib
     from .GUI.Dialog.DMatLib.WMatSelect.WMatSelect import WMatSelect
     from .GUI.Tools.SidebarWindow import SidebarWindow
     from .GUI.Tools.MachinePlotWidget import MachinePlotWidget
     from .GUI.Tools.TreeView import TreeView
+    from .GUI.Tools.GuiOption.WGuiOption import WGuiOption
 
 except ImportError:  # Import for dev version
-    from definitions import PACKAGE_NAME, DATA_DIR, MATLIB_DIR, ROOT_DIR
+    from definitions import PACKAGE_NAME, ROOT_DIR, config_dict
 
     exec(
         "from "
@@ -25,6 +27,7 @@ except ImportError:  # Import for dev version
         + ".GUI.Dialog.DMachineSetup.DMachineSetup import DMachineSetup"
     )
     exec("from " + PACKAGE_NAME + ".GUI.Dialog.DMatLib.DMatLib import DMatLib")
+    exec("from " + PACKAGE_NAME + ".GUI.Dialog.DMatLib.MatLib import MatLib")
     exec(
         "from "
         + PACKAGE_NAME
@@ -35,8 +38,8 @@ except ImportError:  # Import for dev version
         "from " + PACKAGE_NAME + ".GUI.Tools.MachinePlotWidget import MachinePlotWidget"
     )
     exec("from " + PACKAGE_NAME + ".GUI.Tools.TreeView import TreeView")
+    exec("from " + PACKAGE_NAME + ".GUI.Tools.GuiOption.WGuiOption import WGuiOption")
 
-    sys.path.insert(0, ROOT_DIR)
 
 EXT_GUI = True
 
@@ -55,9 +58,20 @@ def run_GUI(argv):
     translator = QTranslator()
     translator.load(translationFile, "GUI//i18n")
     a.installTranslator(translator)
+    if isfile(config_dict["GUI"]["CSS_PATH"]):
+        with open(config_dict["GUI"]["CSS_PATH"], "r") as css_file:
+            a.setStyleSheet(css_file.read())
+
+    # Setting the material library
+    matlib = MatLib(config_dict["MAIN"]["MATLIB_DIR"])
+
+    # MatLib widget
+    mat_widget = DMatLib(matlib, selected=0)
 
     # Machine Setup Widget
-    c = DMachineSetup(machine_path=join(DATA_DIR, "Machine"), matlib_path=MATLIB_DIR)
+    c = DMachineSetup(
+        dmatlib=mat_widget, machine_path=config_dict["MAIN"]["MACHINE_DIR"]
+    )
 
     if EXT_GUI:
         # Setup extended GUI with sub windows
@@ -72,14 +86,15 @@ def run_GUI(argv):
         plt_widget = MachinePlotWidget(window)
         window.addSubWindow("Plot", plt_widget, plt_widget.update)
 
-        mat_widget = DMatLib(window.DesignWidget.matlib, selected=0)
         mat_widget.installEventFilter(window)
-        window.addSubWindow("MatLib", mat_widget, mat_widget.update_mat_list)
+        window.addSubWindow("MatLib", mat_widget, mat_widget.update_list_mat)
 
         tree = TreeView()
         tree_fcn = lambda: tree.generate(getattr(c, "machine"))
         window.addSubWindow("TreeView", tree, tree_fcn)
 
+        option = WGuiOption(machine_setup=c, matlib=matlib)
+        window.addSubWindow("Option", option)
         window.show()
 
     else:

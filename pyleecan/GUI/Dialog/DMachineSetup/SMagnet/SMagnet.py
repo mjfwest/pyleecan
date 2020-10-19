@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from numpy import pi
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QDialog, QMessageBox
+from PySide2.QtCore import Signal
+from PySide2.QtGui import QPixmap
+from PySide2.QtWidgets import QDialog, QMessageBox
 
 from .....Classes.Magnet import Magnet
 from .....Classes.MagnetType13 import MagnetType13
@@ -17,15 +17,14 @@ from .....GUI.Dialog.DMachineSetup.SMagnet.Ui_SMagnet import Ui_SMagnet
 
 
 class SMagnet(Ui_SMagnet, QDialog):
-    """Step to set the magnet (and slot) for SPMSM/SIPMSM
-    """
+    """Step to set the magnet (and slot) for SPMSM/SIPMSM"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for DMachineType nav
     step_name = "Magnet"
 
-    def __init__(self, machine, matlib=[], is_stator=False):
+    def __init__(self, machine, matlib, is_stator=False):
         """Initialize the widget according to machine
 
         Parameters
@@ -34,8 +33,8 @@ class SMagnet(Ui_SMagnet, QDialog):
             A SMagnet widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         is_stator : bool
             To adapt the GUI to set either the stator or the rotor
         """
@@ -104,7 +103,7 @@ class SMagnet(Ui_SMagnet, QDialog):
         # Set material
         self.w_mat.setText(self.tr("mat_mag:"))
         self.w_mat.def_mat = "Magnet1"
-        self.w_mat.update(self.machine.rotor.slot.magnet[0], "mat_type", matlib)
+        self.w_mat.update(self.machine.rotor.slot.magnet[0], "mat_type", self.matlib)
 
         # Connect signals
         self.c_type.currentIndexChanged.connect(self.set_type)
@@ -142,8 +141,7 @@ class SMagnet(Ui_SMagnet, QDialog):
             self.out_Nmag.setText(Nmag_txt + "?")
 
     def emit_save(self):
-        """Emit the saveNeeded signal for the DMachineSetup
-        """
+        """Emit the saveNeeded signal for the DMachineSetup"""
         self.saveNeeded.emit()
 
     def set_type_gui(self, index):
@@ -211,61 +209,65 @@ class SMagnet(Ui_SMagnet, QDialog):
 
     def s_plot(self):
         """Plot the current machine
-        
+
         Parameters
         ----------
         self : SMagnet
             A SMagnet object
         """
         # We have to make sure the slot is right before truing to plot it
-        error = self.check()
+        error = self.check(self.machine.rotor)
 
         if error:  # Error => Display it
             QMessageBox().critical(self, self.tr("Error"), error)
         else:  # No error => Plot the machine
             self.machine.plot()
 
-    def check(self):
+    @staticmethod
+    def check(lamination):
         """Check that the current machine have all the needed field set
 
         Parameters
         ----------
-        self : SMagnet
-            A SMagnet object
+        lamination : Lamination
+            Lamination to check
 
         Returns
         -------
         error: str
             Error message (return None if no error)
         """
-        # Check that everything is set
-        if self.machine.rotor.slot.magnet[0].Wmag is None:
-            return self.tr("You must set Wmag !")
-        if self.machine.rotor.slot.magnet[0].Hmag is None:
-            return self.tr("You must set Hmag !")
-        if (
-            hasattr(self.machine.rotor.slot.magnet[0], "Rtop")
-            and self.machine.rotor.slot.magnet[0].Rtop is None
-        ):
-            return self.tr("You must set Rtopm !")
-        if self.machine.rotor.slot.H0 is None:
-            return self.tr("You must set H0 !")
+        try:
+            # Check that everything is set
+            if lamination.slot.magnet[0].Wmag is None:
+                return "You must set Wmag !"
+            if lamination.slot.magnet[0].Hmag is None:
+                return "You must set Hmag !"
+            if (
+                hasattr(lamination.slot.magnet[0], "Rtop")
+                and lamination.slot.magnet[0].Rtop is None
+            ):
+                return "You must set Rtopm !"
+            if lamination.slot.H0 is None:
+                return "You must set H0 !"
+        except Exception as e:
+            return str(e)
 
         # Check that everything is set right
         try:
-            mec_gap = self.machine.comp_width_airgap_mec()
+            mec_gap = lamination.parent.comp_width_airgap_mec()
         except:
-            return self.tr("Unable to draw the magnet, " "please check your geometry !")
+            return "Unable to draw the magnet, " "please check your geometry !"
 
         if mec_gap <= 0:
-            return self.tr("You must have gap_min > 0 (reduce Hmag) !")
-        if hasattr(self.machine.rotor.slot.magnet[0], "Rtop"):
+            return "You must have gap_min > 0 (reduce Hmag) !"
+        if hasattr(lamination.slot.magnet[0], "Rtop"):
             if (
-                type(self.machine.rotor.slot.magnet[0]) is MagnetType13
-                and self.machine.rotor.slot.magnet[0].Rtop
-                < self.machine.rotor.slot.magnet[0].Wmag / 2.0
+                type(lamination.slot.magnet[0]) is MagnetType13
+                and lamination.slot.magnet[0].Rtop
+                < lamination.slot.magnet[0].Wmag / 2.0
             ):
-                return self.tr("You must have Rtopm >= Wmag/2 !")
+                return "You must have Rtopm >= Wmag/2 !"
 
     def s_set_type_magnetization(self, index):
         """Signal to update the value of type_magnetization according to the combobox

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/MagnetType13.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/MagnetType13.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/MagnetType13
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .MagnetFlat import MagnetFlat
 
 # Import all class method
@@ -74,9 +78,9 @@ class MagnetType13(MagnetFlat):
         )
     else:
         comp_surface = comp_surface
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -89,18 +93,20 @@ class MagnetType13(MagnetFlat):
         type_magnetization=0,
         Lmag=0.95,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_type == -1:
-            mat_type = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -116,7 +122,7 @@ class MagnetType13(MagnetFlat):
                 type_magnetization = init_dict["type_magnetization"]
             if "Lmag" in list(init_dict.keys()):
                 Lmag = init_dict["Lmag"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Wmag = Wmag
         self.Hmag = Hmag
         self.Rtop = Rtop
@@ -128,7 +134,7 @@ class MagnetType13(MagnetFlat):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MagnetType13_str = ""
         # Get the properties inherited from MagnetFlat
@@ -156,15 +162,14 @@ class MagnetType13(MagnetFlat):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from MagnetFlat
         MagnetType13_dict = super(MagnetType13, self).as_dict()
         MagnetType13_dict["Wmag"] = self.Wmag
         MagnetType13_dict["Hmag"] = self.Hmag
         MagnetType13_dict["Rtop"] = self.Rtop
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         MagnetType13_dict["__class__"] = "MagnetType13"
         return MagnetType13_dict
@@ -187,9 +192,15 @@ class MagnetType13(MagnetFlat):
         check_var("Wmag", value, "float", Vmin=0)
         self._Wmag = value
 
-    # magnet bottom width [m]
-    # Type : float, min = 0
-    Wmag = property(fget=_get_Wmag, fset=_set_Wmag, doc=u"""magnet bottom width [m]""")
+    Wmag = property(
+        fget=_get_Wmag,
+        fset=_set_Wmag,
+        doc=u"""magnet bottom width [m]
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Hmag(self):
         """getter of Hmag"""
@@ -200,9 +211,15 @@ class MagnetType13(MagnetFlat):
         check_var("Hmag", value, "float", Vmin=0)
         self._Hmag = value
 
-    # magnet radial height [m]
-    # Type : float, min = 0
-    Hmag = property(fget=_get_Hmag, fset=_set_Hmag, doc=u"""magnet radial height [m]""")
+    Hmag = property(
+        fget=_get_Hmag,
+        fset=_set_Hmag,
+        doc=u"""magnet radial height [m]
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Rtop(self):
         """getter of Rtop"""
@@ -213,8 +230,12 @@ class MagnetType13(MagnetFlat):
         check_var("Rtop", value, "float", Vmin=0)
         self._Rtop = value
 
-    # radius of the circular top shape [m]
-    # Type : float, min = 0
     Rtop = property(
-        fget=_get_Rtop, fset=_set_Rtop, doc=u"""radius of the circular top shape [m]"""
+        fget=_get_Rtop,
+        fset=_set_Rtop,
+        doc=u"""radius of the circular top shape [m]
+
+        :Type: float
+        :min: 0
+        """,
     )

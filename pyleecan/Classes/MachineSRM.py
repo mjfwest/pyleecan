@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/MachineSRM.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/MachineSRM.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/MachineSRM
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .MachineSync import MachineSync
 
 # Import all class method
@@ -16,6 +20,11 @@ try:
     from ..Methods.Machine.MachineSRM.check import check
 except ImportError as error:
     check = error
+
+try:
+    from ..Methods.Machine.MachineSRM.get_lam_list import get_lam_list
+except ImportError as error:
+    get_lam_list = error
 
 try:
     from ..Methods.Machine.MachineSRM.get_machine_type import get_machine_type
@@ -45,6 +54,17 @@ class MachineSRM(MachineSync):
         )
     else:
         check = check
+    # cf Methods.Machine.MachineSRM.get_lam_list
+    if isinstance(get_lam_list, ImportError):
+        get_lam_list = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use MachineSRM method get_lam_list: " + str(get_lam_list)
+                )
+            )
+        )
+    else:
+        get_lam_list = get_lam_list
     # cf Methods.Machine.MachineSRM.get_machine_type
     if isinstance(get_machine_type, ImportError):
         get_machine_type = property(
@@ -57,9 +77,9 @@ class MachineSRM(MachineSync):
         )
     else:
         get_machine_type = get_machine_type
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -74,24 +94,20 @@ class MachineSRM(MachineSync):
         type_machine=1,
         logger_name="Pyleecan.Machine",
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if rotor == -1:
-            rotor = LamSlot()
-        if stator == -1:
-            stator = LamSlotWind()
-        if frame == -1:
-            frame = Frame()
-        if shaft == -1:
-            shaft = Shaft()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -111,40 +127,9 @@ class MachineSRM(MachineSync):
                 type_machine = init_dict["type_machine"]
             if "logger_name" in list(init_dict.keys()):
                 logger_name = init_dict["logger_name"]
-        # Initialisation by argument
-        # rotor can be None, a LamSlot object or a dict
-        if isinstance(rotor, dict):
-            # Check that the type is correct (including daughter)
-            class_name = rotor.get("__class__")
-            if class_name not in [
-                "LamSlot",
-                "LamSlotMag",
-                "LamSlotWind",
-                "LamSquirrelCage",
-            ]:
-                raise InitUnKnowClassError(
-                    "Unknow class name " + class_name + " in init_dict for rotor"
-                )
-            # Dynamic import to call the correct constructor
-            module = __import__("pyleecan.Classes." + class_name, fromlist=[class_name])
-            class_obj = getattr(module, class_name)
-            self.rotor = class_obj(init_dict=rotor)
-        else:
-            self.rotor = rotor
-        # stator can be None, a LamSlotWind object or a dict
-        if isinstance(stator, dict):
-            # Check that the type is correct (including daughter)
-            class_name = stator.get("__class__")
-            if class_name not in ["LamSlotWind", "LamSquirrelCage"]:
-                raise InitUnKnowClassError(
-                    "Unknow class name " + class_name + " in init_dict for stator"
-                )
-            # Dynamic import to call the correct constructor
-            module = __import__("pyleecan.Classes." + class_name, fromlist=[class_name])
-            class_obj = getattr(module, class_name)
-            self.stator = class_obj(init_dict=stator)
-        else:
-            self.stator = stator
+        # Set the properties (value check and convertion are done in setter)
+        self.rotor = rotor
+        self.stator = stator
         # Call MachineSync init
         super(MachineSRM, self).__init__(
             frame=frame,
@@ -158,7 +143,7 @@ class MachineSRM(MachineSync):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MachineSRM_str = ""
         # Get the properties inherited from MachineSync
@@ -191,8 +176,7 @@ class MachineSRM(MachineSync):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from MachineSync
         MachineSRM_dict = super(MachineSRM, self).as_dict()
@@ -204,7 +188,7 @@ class MachineSRM(MachineSync):
             MachineSRM_dict["stator"] = None
         else:
             MachineSRM_dict["stator"] = self.stator.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         MachineSRM_dict["__class__"] = "MachineSRM"
         return MachineSRM_dict
@@ -225,15 +209,29 @@ class MachineSRM(MachineSync):
 
     def _set_rotor(self, value):
         """setter of rotor"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "rotor"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = LamSlot()
         check_var("rotor", value, "LamSlot")
         self._rotor = value
 
         if self._rotor is not None:
             self._rotor.parent = self
 
-    # Machine's Rotor
-    # Type : LamSlot
-    rotor = property(fget=_get_rotor, fset=_set_rotor, doc=u"""Machine's Rotor""")
+    rotor = property(
+        fget=_get_rotor,
+        fset=_set_rotor,
+        doc=u"""Machine's Rotor
+
+        :Type: LamSlot
+        """,
+    )
 
     def _get_stator(self):
         """getter of stator"""
@@ -241,12 +239,26 @@ class MachineSRM(MachineSync):
 
     def _set_stator(self, value):
         """setter of stator"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "stator"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = LamSlotWind()
         check_var("stator", value, "LamSlotWind")
         self._stator = value
 
         if self._stator is not None:
             self._stator.parent = self
 
-    # Machine's Stator
-    # Type : LamSlotWind
-    stator = property(fget=_get_stator, fset=_set_stator, doc=u"""Machine's Stator""")
+    stator = property(
+        fget=_get_stator,
+        fset=_set_stator,
+        doc=u"""Machine's Stator
+
+        :Type: LamSlotWind
+        """,
+    )

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Optimization/OptiGenAlgNsga2Deap.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Optimization/OptiGenAlgNsga2Deap.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Optimization/OptiGenAlgNsga2Deap
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .OptiGenAlg import OptiGenAlg
 
 # Import all class method
@@ -39,8 +43,17 @@ try:
 except ImportError as error:
     check_optimization_input = error
 
+try:
+    from ..Methods.Optimization.OptiGenAlgNsga2Deap.delete_toolbox import delete_toolbox
+except ImportError as error:
+    delete_toolbox = error
 
-from inspect import getsource
+
+from ntpath import basename
+from os.path import isfile
+from ._check import CheckTypeError
+import numpy as np
+import random
 from cloudpickle import dumps, loads
 from ._check import CheckTypeError
 
@@ -49,8 +62,8 @@ try:
 except ImportError:
     Toolbox = ImportError
 from ._check import InitUnKnowClassError
-from .OutputMultiOpti import OutputMultiOpti
 from .OptiProblem import OptiProblem
+from .XOutput import XOutput
 
 
 class OptiGenAlgNsga2Deap(OptiGenAlg):
@@ -112,16 +125,27 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
         )
     else:
         check_optimization_input = check_optimization_input
-    # save method is available in all object
+    # cf Methods.Optimization.OptiGenAlgNsga2Deap.delete_toolbox
+    if isinstance(delete_toolbox, ImportError):
+        delete_toolbox = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use OptiGenAlgNsga2Deap method delete_toolbox: "
+                    + str(delete_toolbox)
+                )
+            )
+        )
+    else:
+        delete_toolbox = delete_toolbox
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
         self,
         toolbox=None,
-        multi_output=-1,
         selector=None,
         crossover=None,
         mutator=None,
@@ -130,29 +154,29 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
         size_pop=40,
         nb_gen=100,
         problem=-1,
-        logger_name="Pyleecan.OptiGenAlg",
+        xoutput=-1,
+        logger_name="Pyleecan.OptiSolver",
+        is_keep_all_output=False,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if multi_output == -1:
-            multi_output = OutputMultiOpti()
-        if problem == -1:
-            problem = OptiProblem()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
             if "toolbox" in list(init_dict.keys()):
                 toolbox = init_dict["toolbox"]
-            if "multi_output" in list(init_dict.keys()):
-                multi_output = init_dict["multi_output"]
             if "selector" in list(init_dict.keys()):
                 selector = init_dict["selector"]
             if "crossover" in list(init_dict.keys()):
@@ -169,16 +193,16 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
                 nb_gen = init_dict["nb_gen"]
             if "problem" in list(init_dict.keys()):
                 problem = init_dict["problem"]
+            if "xoutput" in list(init_dict.keys()):
+                xoutput = init_dict["xoutput"]
             if "logger_name" in list(init_dict.keys()):
                 logger_name = init_dict["logger_name"]
-        # Initialisation by argument
-        # Check if the type Toolbox has been imported with success
-        if isinstance(Toolbox, ImportError):
-            raise ImportError("Unknown type Toolbox please install deap")
+            if "is_keep_all_output" in list(init_dict.keys()):
+                is_keep_all_output = init_dict["is_keep_all_output"]
+        # Set the properties (value check and convertion are done in setter)
         self.toolbox = toolbox
         # Call OptiGenAlg init
         super(OptiGenAlgNsga2Deap, self).__init__(
-            multi_output=multi_output,
             selector=selector,
             crossover=crossover,
             mutator=mutator,
@@ -187,13 +211,15 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
             size_pop=size_pop,
             nb_gen=nb_gen,
             problem=problem,
+            xoutput=xoutput,
             logger_name=logger_name,
+            is_keep_all_output=is_keep_all_output,
         )
         # The class is frozen (in OptiGenAlg init), for now it's impossible to
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         OptiGenAlgNsga2Deap_str = ""
         # Get the properties inherited from OptiGenAlg
@@ -215,8 +241,7 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from OptiGenAlg
         OptiGenAlgNsga2Deap_dict = super(OptiGenAlgNsga2Deap, self).as_dict()
@@ -228,7 +253,7 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
                 "__repr__": str(self._toolbox.__repr__()),
                 "serialized": dumps(self._toolbox).decode("ISO-8859-2"),
             }
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         OptiGenAlgNsga2Deap_dict["__class__"] = "OptiGenAlgNsga2Deap"
         return OptiGenAlgNsga2Deap_dict
@@ -246,18 +271,14 @@ class OptiGenAlgNsga2Deap(OptiGenAlg):
 
     def _set_toolbox(self, value):
         """setter of toolbox"""
-        try:  # Check the type
-            check_var("toolbox", value, "dict")
-        except CheckTypeError:
-            check_var("toolbox", value, "deap.base.Toolbox")
-            # property can be set from a list to handle loads
-        if (
-            type(value) == dict
-        ):  # Load type from saved dict {"type":type(value),"str": str(value),"serialized": serialized(value)]
-            self._toolbox = loads(value["serialized"].encode("ISO-8859-2"))
-        else:
-            self._toolbox = value
+        check_var("toolbox", value, "Toolbox")
+        self._toolbox = value
 
-    # DEAP toolbox
-    # Type : deap.base.Toolbox
-    toolbox = property(fget=_get_toolbox, fset=_set_toolbox, doc=u"""DEAP toolbox""")
+    toolbox = property(
+        fget=_get_toolbox,
+        fset=_set_toolbox,
+        doc=u"""DEAP toolbox
+
+        :Type: deap.base.Toolbox
+        """,
+    )

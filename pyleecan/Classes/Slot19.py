@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/Slot19.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/Slot19.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/Slot19
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Slot import Slot
 
 # Import all class method
@@ -134,24 +138,34 @@ class Slot19(Slot):
         )
     else:
         comp_surface = comp_surface
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, W0=0.013, H0=0.02, W1=0.01, Wx_is_rad=False, Zs=36, init_dict=None
+        self,
+        W0=0.013,
+        H0=0.02,
+        W1=0.01,
+        Wx_is_rad=False,
+        Zs=36,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -165,7 +179,7 @@ class Slot19(Slot):
                 Wx_is_rad = init_dict["Wx_is_rad"]
             if "Zs" in list(init_dict.keys()):
                 Zs = init_dict["Zs"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.W0 = W0
         self.H0 = H0
         self.W1 = W1
@@ -176,7 +190,7 @@ class Slot19(Slot):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Slot19_str = ""
         # Get the properties inherited from Slot
@@ -207,8 +221,7 @@ class Slot19(Slot):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Slot
         Slot19_dict = super(Slot19, self).as_dict()
@@ -216,7 +229,7 @@ class Slot19(Slot):
         Slot19_dict["H0"] = self.H0
         Slot19_dict["W1"] = self.W1
         Slot19_dict["Wx_is_rad"] = self.Wx_is_rad
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Slot19_dict["__class__"] = "Slot19"
         return Slot19_dict
@@ -240,9 +253,15 @@ class Slot19(Slot):
         check_var("W0", value, "float", Vmin=0)
         self._W0 = value
 
-    # Slot top width
-    # Type : float, min = 0
-    W0 = property(fget=_get_W0, fset=_set_W0, doc=u"""Slot top width""")
+    W0 = property(
+        fget=_get_W0,
+        fset=_set_W0,
+        doc=u"""Slot top width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H0(self):
         """getter of H0"""
@@ -253,9 +272,15 @@ class Slot19(Slot):
         check_var("H0", value, "float", Vmin=0)
         self._H0 = value
 
-    # Slot height
-    # Type : float, min = 0
-    H0 = property(fget=_get_H0, fset=_set_H0, doc=u"""Slot height""")
+    H0 = property(
+        fget=_get_H0,
+        fset=_set_H0,
+        doc=u"""Slot height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W1(self):
         """getter of W1"""
@@ -266,9 +291,15 @@ class Slot19(Slot):
         check_var("W1", value, "float", Vmin=0)
         self._W1 = value
 
-    # Slot bottom width.
-    # Type : float, min = 0
-    W1 = property(fget=_get_W1, fset=_set_W1, doc=u"""Slot bottom width.""")
+    W1 = property(
+        fget=_get_W1,
+        fset=_set_W1,
+        doc=u"""Slot bottom width.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Wx_is_rad(self):
         """getter of Wx_is_rad"""
@@ -279,8 +310,11 @@ class Slot19(Slot):
         check_var("Wx_is_rad", value, "bool")
         self._Wx_is_rad = value
 
-    # Wx unit, 0 for m, 1 for rad
-    # Type : bool
     Wx_is_rad = property(
-        fget=_get_Wx_is_rad, fset=_set_Wx_is_rad, doc=u"""Wx unit, 0 for m, 1 for rad"""
+        fget=_get_Wx_is_rad,
+        fset=_set_Wx_is_rad,
+        doc=u"""Wx unit, 0 for m, 1 for rad
+
+        :Type: bool
+        """,
     )

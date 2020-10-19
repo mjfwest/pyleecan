@@ -63,7 +63,18 @@ def generate_str(gen_dict, class_dict):
             )
         elif prop["type"] == "function":
             # Add => < MyClass_str += "my_var = "+str(self._my_var) >to var_str
-            var_str += TAB2 + "if self._" + prop["name"] + "[1] is None:\n"
+
+            var_str += TAB2 + "if self._" + prop["name"] + "_str is not None:\n"
+            var_str += (
+                TAB3
+                + class_name
+                + '_str += "'
+                + prop["name"]
+                + ' = " + self._'
+                + prop["name"]
+                + "_str + linesep\n"
+            )
+            var_str += TAB2 + "elif self._" + prop["name"] + "_func is not None:\n"
             var_str += (
                 TAB3
                 + class_name
@@ -71,18 +82,10 @@ def generate_str(gen_dict, class_dict):
                 + prop["name"]
                 + ' = " + str(self._'
                 + prop["name"]
-                + "[1])\n"
+                + "_func)+ linesep\n"
             )
             var_str += TAB2 + "else:\n"
-            var_str += (
-                TAB3
-                + class_name
-                + '_str += "'
-                + prop["name"]
-                + ' = " + linesep + str(self._'
-                + prop["name"]
-                + "[1])"
-            )
+            var_str += TAB3 + class_name + '_str += "' + prop["name"] + ' = None"'
         elif "." in prop["type"]:  # Imported type
             var_str += (
                 TAB2
@@ -134,6 +137,17 @@ def generate_str(gen_dict, class_dict):
                 + prop["name"]
                 + "[key])"
             )
+        elif prop["type"] == "[ndarray]":
+            var_str += TAB2 + "if len(self." + prop["name"] + ") == 0:\n"
+            var_str += TAB3 + class_name + '_str += "' + prop["name"] + ' = list()"\n'
+            var_str += TAB2 + "for ii, value in enumerate(self." + prop["name"] + "):\n"
+            var_str += (
+                TAB3
+                + class_name
+                + '_str += "'
+                + prop["name"]
+                + '["+str(ii)+"] = "+str(value)'
+            )
         elif is_dict_pyleecan_type(prop["type"]):
             var_str += TAB2 + "if len(self." + prop["name"] + ") == 0:\n"
             var_str += (
@@ -149,6 +163,19 @@ def generate_str(gen_dict, class_dict):
             var_str += (
                 TAB3 + class_name + '_str += "' + prop["name"] + '["+key+"] ="+ tmp'
             )
+        elif prop["type"] == "tuple":  # For tuple
+            var_str += TAB2 + "if self." + prop["name"] + " is not None:\n"
+            var_str += (
+                TAB3
+                + "tmp = self."
+                + prop["name"]
+                + '.__str__().replace(linesep, linesep + "\\t").rstrip("\\t")\n'
+            )
+            var_str += (
+                TAB3 + class_name + '_str += "' + prop["name"] + ' = "+ tmp + linesep\n'
+            )
+            var_str += TAB2 + "else:\n"
+            var_str += TAB3 + class_name + '_str += "' + prop["name"] + ' = None"'
         else:  # For pyleecan type print the __str__
             # Add => < "MyClass = "+str(self.my_var.as_dict()) >to var_str
             var_str += TAB2 + "if self." + prop["name"] + " is not None:\n"
@@ -173,7 +200,7 @@ def generate_str(gen_dict, class_dict):
     # Code generation
     str_str += TAB + "def __str__(self):\n"
     str_str += (
-        TAB2 + '"""Convert this objet in a readeable string ' + '(for print)"""\n\n'
+        TAB2 + '"""Convert this object in a readeable string ' + '(for print)"""\n\n'
     )
     str_str += TAB2 + class_name + '_str = ""\n'
     if class_dict["mother"] != "":

@@ -1,4 +1,5 @@
 from logging import Filter, DEBUG, INFO, WARNING, ERROR, CRITICAL
+from .definitions import USER_DIR
 
 """
 File containing every Pyleecan loggers.
@@ -15,8 +16,8 @@ class LevelFilter(Filter):
     def __init__(self, level):
         """
         LevelFilter constructor
-        
-        Parameters: 
+
+        Parameters:
             level : int
                 log level to keep
         """
@@ -62,7 +63,7 @@ LOGGING_CONFIG_CONSOLE = {
             "handlers": [],
         },
         "Pyleecan.OutGeo": {"level": DEFAULT_LEVEL, "propagate": True, "handlers": []},
-        "Pyleecan.OptiGenAlg": {
+        "Pyleecan.OptiSolver": {
             "level": DEFAULT_LEVEL,
             "propagate": False,
             "handlers": ["opti_file_handler"],  # <-- redirection in a file
@@ -109,7 +110,7 @@ LOGGING_CONFIG_CONSOLE = {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",  # log file
+            "filename": USER_DIR + "/Pyleecan_optimization.log",  # log file
             "mode": "a",
         },
         #         'info_rotating_file_handler': {
@@ -181,7 +182,7 @@ LOGGING_CONFIG_FILE = {
             "propagate": False,
             "handlers": ["OutGeo_fh"],
         },
-        "Pyleecan.OptiGenAlg": {
+        "Pyleecan.OptiSolver": {
             "level": DEFAULT_LEVEL,
             "propagate": False,
             "handlers": ["opti_file_handler"],  # <-- redirection in a file
@@ -202,56 +203,56 @@ LOGGING_CONFIG_FILE = {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "Output_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "Simulation_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "OutElec_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "OutMag_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "OutStruct_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "Machine_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         "Opti_fh": {
             "level": "DEBUG",
             "formatter": "file_formatter",
             "class": "logging.FileHandler",
-            "filename": "Pyleecan_optimization.log",
+            "filename": USER_DIR + "/Pyleecan_optimization.log",
             "mode": "a",
         },
         #         'info_rotating_file_handler': {

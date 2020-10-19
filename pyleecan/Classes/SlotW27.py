@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/SlotW27.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/SlotW27.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/SlotW27
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .SlotWind import SlotWind
 
 # Import all class method
@@ -168,9 +172,9 @@ class SlotW27(SlotWind):
         )
     else:
         comp_surface_wind = comp_surface_wind
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -186,16 +190,20 @@ class SlotW27(SlotWind):
         is_trap_wind=False,
         Zs=36,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -217,7 +225,7 @@ class SlotW27(SlotWind):
                 is_trap_wind = init_dict["is_trap_wind"]
             if "Zs" in list(init_dict.keys()):
                 Zs = init_dict["Zs"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.H0 = H0
         self.H1 = H1
         self.H2 = H2
@@ -232,7 +240,7 @@ class SlotW27(SlotWind):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         SlotW27_str = ""
         # Get the properties inherited from SlotWind
@@ -275,8 +283,7 @@ class SlotW27(SlotWind):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from SlotWind
         SlotW27_dict = super(SlotW27, self).as_dict()
@@ -288,7 +295,7 @@ class SlotW27(SlotWind):
         SlotW27_dict["W2"] = self.W2
         SlotW27_dict["W3"] = self.W3
         SlotW27_dict["is_trap_wind"] = self.is_trap_wind
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         SlotW27_dict["__class__"] = "SlotW27"
         return SlotW27_dict
@@ -316,9 +323,15 @@ class SlotW27(SlotWind):
         check_var("H0", value, "float", Vmin=0)
         self._H0 = value
 
-    # Slot isthmus height.
-    # Type : float, min = 0
-    H0 = property(fget=_get_H0, fset=_set_H0, doc=u"""Slot isthmus height.""")
+    H0 = property(
+        fget=_get_H0,
+        fset=_set_H0,
+        doc=u"""Slot isthmus height.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H1(self):
         """getter of H1"""
@@ -329,9 +342,15 @@ class SlotW27(SlotWind):
         check_var("H1", value, "float", Vmin=0)
         self._H1 = value
 
-    # Slot first part height
-    # Type : float, min = 0
-    H1 = property(fget=_get_H1, fset=_set_H1, doc=u"""Slot first part height""")
+    H1 = property(
+        fget=_get_H1,
+        fset=_set_H1,
+        doc=u"""Slot first part height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_H2(self):
         """getter of H2"""
@@ -342,9 +361,15 @@ class SlotW27(SlotWind):
         check_var("H2", value, "float", Vmin=0)
         self._H2 = value
 
-    # Slot second part height
-    # Type : float, min = 0
-    H2 = property(fget=_get_H2, fset=_set_H2, doc=u"""Slot second part height""")
+    H2 = property(
+        fget=_get_H2,
+        fset=_set_H2,
+        doc=u"""Slot second part height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W0(self):
         """getter of W0"""
@@ -355,9 +380,15 @@ class SlotW27(SlotWind):
         check_var("W0", value, "float", Vmin=0)
         self._W0 = value
 
-    # Slot isthmus width.
-    # Type : float, min = 0
-    W0 = property(fget=_get_W0, fset=_set_W0, doc=u"""Slot isthmus width.""")
+    W0 = property(
+        fget=_get_W0,
+        fset=_set_W0,
+        doc=u"""Slot isthmus width.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W1(self):
         """getter of W1"""
@@ -368,9 +399,15 @@ class SlotW27(SlotWind):
         check_var("W1", value, "float", Vmin=0)
         self._W1 = value
 
-    # Slot top width.
-    # Type : float, min = 0
-    W1 = property(fget=_get_W1, fset=_set_W1, doc=u"""Slot top width.""")
+    W1 = property(
+        fget=_get_W1,
+        fset=_set_W1,
+        doc=u"""Slot top width.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W2(self):
         """getter of W2"""
@@ -381,9 +418,15 @@ class SlotW27(SlotWind):
         check_var("W2", value, "float", Vmin=0)
         self._W2 = value
 
-    # Slot middle width
-    # Type : float, min = 0
-    W2 = property(fget=_get_W2, fset=_set_W2, doc=u"""Slot middle width""")
+    W2 = property(
+        fget=_get_W2,
+        fset=_set_W2,
+        doc=u"""Slot middle width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_W3(self):
         """getter of W3"""
@@ -394,9 +437,15 @@ class SlotW27(SlotWind):
         check_var("W3", value, "float", Vmin=0)
         self._W3 = value
 
-    # Slot bottom width.
-    # Type : float, min = 0
-    W3 = property(fget=_get_W3, fset=_set_W3, doc=u"""Slot bottom width.""")
+    W3 = property(
+        fget=_get_W3,
+        fset=_set_W3,
+        doc=u"""Slot bottom width.
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_is_trap_wind(self):
         """getter of is_trap_wind"""
@@ -407,10 +456,11 @@ class SlotW27(SlotWind):
         check_var("is_trap_wind", value, "bool")
         self._is_trap_wind = value
 
-    # If True, split the winding on the  trapezium bases. Else split at the middle height as usual
-    # Type : bool
     is_trap_wind = property(
         fget=_get_is_trap_wind,
         fset=_set_is_trap_wind,
-        doc=u"""If True, split the winding on the  trapezium bases. Else split at the middle height as usual""",
+        doc=u"""If True, split the winding on the  trapezium bases. Else split at the middle height as usual
+
+        :Type: bool
+        """,
     )

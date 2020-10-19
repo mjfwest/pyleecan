@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/CondType12.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/CondType12.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/CondType12
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Conductor import Conductor
 
 # Import all class method
@@ -116,9 +120,9 @@ class CondType12(Conductor):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -132,20 +136,20 @@ class CondType12(Conductor):
         cond_mat=-1,
         ins_mat=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if cond_mat == -1:
-            cond_mat = Material()
-        if ins_mat == -1:
-            ins_mat = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -163,7 +167,7 @@ class CondType12(Conductor):
                 cond_mat = init_dict["cond_mat"]
             if "ins_mat" in list(init_dict.keys()):
                 ins_mat = init_dict["ins_mat"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Wwire = Wwire
         self.Wins_cond = Wins_cond
         self.Nwppc = Nwppc
@@ -175,7 +179,7 @@ class CondType12(Conductor):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         CondType12_str = ""
         # Get the properties inherited from Conductor
@@ -209,8 +213,7 @@ class CondType12(Conductor):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Conductor
         CondType12_dict = super(CondType12, self).as_dict()
@@ -219,7 +222,7 @@ class CondType12(Conductor):
         CondType12_dict["Nwppc"] = self.Nwppc
         CondType12_dict["Wins_wire"] = self.Wins_wire
         CondType12_dict["Kwoh"] = self.Kwoh
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         CondType12_dict["__class__"] = "CondType12"
         return CondType12_dict
@@ -244,12 +247,14 @@ class CondType12(Conductor):
         check_var("Wwire", value, "float", Vmin=0)
         self._Wwire = value
 
-    # cf schematics, single wire diameter without insulation [m]
-    # Type : float, min = 0
     Wwire = property(
         fget=_get_Wwire,
         fset=_set_Wwire,
-        doc=u"""cf schematics, single wire diameter without insulation [m]""",
+        doc=u"""cf schematics, single wire diameter without insulation [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Wins_cond(self):
@@ -261,12 +266,14 @@ class CondType12(Conductor):
         check_var("Wins_cond", value, "float", Vmin=0)
         self._Wins_cond = value
 
-    # (advanced) cf schematics, winding coil insulation diameter [m]
-    # Type : float, min = 0
     Wins_cond = property(
         fget=_get_Wins_cond,
         fset=_set_Wins_cond,
-        doc=u"""(advanced) cf schematics, winding coil insulation diameter [m]""",
+        doc=u"""(advanced) cf schematics, winding coil insulation diameter [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Nwppc(self):
@@ -278,12 +285,14 @@ class CondType12(Conductor):
         check_var("Nwppc", value, "int", Vmin=1)
         self._Nwppc = value
 
-    # cf schematics, winding number of random wires (strands) in parallel per coil
-    # Type : int, min = 1
     Nwppc = property(
         fget=_get_Nwppc,
         fset=_set_Nwppc,
-        doc=u"""cf schematics, winding number of random wires (strands) in parallel per coil""",
+        doc=u"""cf schematics, winding number of random wires (strands) in parallel per coil
+
+        :Type: int
+        :min: 1
+        """,
     )
 
     def _get_Wins_wire(self):
@@ -295,12 +304,14 @@ class CondType12(Conductor):
         check_var("Wins_wire", value, "float", Vmin=0)
         self._Wins_wire = value
 
-    # (advanced) cf schematics, winding strand insulation thickness [m]
-    # Type : float, min = 0
     Wins_wire = property(
         fget=_get_Wins_wire,
         fset=_set_Wins_wire,
-        doc=u"""(advanced) cf schematics, winding strand insulation thickness [m]""",
+        doc=u"""(advanced) cf schematics, winding strand insulation thickness [m]
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Kwoh(self):
@@ -312,10 +323,12 @@ class CondType12(Conductor):
         check_var("Kwoh", value, "float", Vmin=0)
         self._Kwoh = value
 
-    # winding overhang factor which describes the fact that random round wire end-windings can be more or less compressed (0.5 for small motors, 0.8 for large motors) - can be used to tune the average turn length (relevant if type_cond==1)
-    # Type : float, min = 0
     Kwoh = property(
         fget=_get_Kwoh,
         fset=_set_Kwoh,
-        doc=u"""winding overhang factor which describes the fact that random round wire end-windings can be more or less compressed (0.5 for small motors, 0.8 for large motors) - can be used to tune the average turn length (relevant if type_cond==1)""",
+        doc=u"""winding overhang factor which describes the fact that random round wire end-windings can be more or less compressed (0.5 for small motors, 0.8 for large motors) - can be used to tune the average turn length (relevant if type_cond==1)
+
+        :Type: float
+        :min: 0
+        """,
     )

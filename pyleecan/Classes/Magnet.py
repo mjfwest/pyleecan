@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/Magnet.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/Magnet.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/Magnet
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 # Import all class method
@@ -143,24 +147,32 @@ class Magnet(FrozenClass):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, mat_type=-1, type_magnetization=0, Lmag=0.95, init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(
+        self,
+        mat_type=-1,
+        type_magnetization=0,
+        Lmag=0.95,
+        init_dict=None,
+        init_str=None,
+    ):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_type == -1:
-            mat_type = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -170,13 +182,9 @@ class Magnet(FrozenClass):
                 type_magnetization = init_dict["type_magnetization"]
             if "Lmag" in list(init_dict.keys()):
                 Lmag = init_dict["Lmag"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
-        # mat_type can be None, a Material object or a dict
-        if isinstance(mat_type, dict):
-            self.mat_type = Material(init_dict=mat_type)
-        else:
-            self.mat_type = mat_type
+        self.mat_type = mat_type
         self.type_magnetization = type_magnetization
         self.Lmag = Lmag
 
@@ -184,7 +192,7 @@ class Magnet(FrozenClass):
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Magnet_str = ""
         if self.parent is None:
@@ -214,8 +222,7 @@ class Magnet(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         Magnet_dict = dict()
         if self.mat_type is None:
@@ -224,7 +231,7 @@ class Magnet(FrozenClass):
             Magnet_dict["mat_type"] = self.mat_type.as_dict()
         Magnet_dict["type_magnetization"] = self.type_magnetization
         Magnet_dict["Lmag"] = self.Lmag
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         Magnet_dict["__class__"] = "Magnet"
         return Magnet_dict
 
@@ -242,16 +249,28 @@ class Magnet(FrozenClass):
 
     def _set_mat_type(self, value):
         """setter of mat_type"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "mat_type"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = Material()
         check_var("mat_type", value, "Material")
         self._mat_type = value
 
         if self._mat_type is not None:
             self._mat_type.parent = self
 
-    # The Magnet material
-    # Type : Material
     mat_type = property(
-        fget=_get_mat_type, fset=_set_mat_type, doc=u"""The Magnet material"""
+        fget=_get_mat_type,
+        fset=_set_mat_type,
+        doc=u"""The Magnet material
+
+        :Type: Material
+        """,
     )
 
     def _get_type_magnetization(self):
@@ -263,12 +282,15 @@ class Magnet(FrozenClass):
         check_var("type_magnetization", value, "int", Vmin=0, Vmax=5)
         self._type_magnetization = value
 
-    # Permanent magnet magnetization type: 0 for radial, 1 for parallel, 2 for Hallbach
-    # Type : int, min = 0, max = 5
     type_magnetization = property(
         fget=_get_type_magnetization,
         fset=_set_type_magnetization,
-        doc=u"""Permanent magnet magnetization type: 0 for radial, 1 for parallel, 2 for Hallbach""",
+        doc=u"""Permanent magnet magnetization type: 0 for radial, 1 for parallel, 2 for Hallbach
+
+        :Type: int
+        :min: 0
+        :max: 5
+        """,
     )
 
     def _get_Lmag(self):
@@ -280,6 +302,12 @@ class Magnet(FrozenClass):
         check_var("Lmag", value, "float", Vmin=0)
         self._Lmag = value
 
-    # Magnet axial length
-    # Type : float, min = 0
-    Lmag = property(fget=_get_Lmag, fset=_set_Lmag, doc=u"""Magnet axial length""")
+    Lmag = property(
+        fget=_get_Lmag,
+        fset=_set_Lmag,
+        doc=u"""Magnet axial length
+
+        :Type: float
+        :min: 0
+        """,
+    )

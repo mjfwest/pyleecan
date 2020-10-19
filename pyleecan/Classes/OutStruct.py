@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Output/OutStruct.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Output/OutStruct.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Output/OutStruct
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import set_array, check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 from numpy import array, array_equal
@@ -19,9 +23,9 @@ class OutStruct(FrozenClass):
 
     VERSION = 1
 
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -31,20 +35,25 @@ class OutStruct(FrozenClass):
         angle=None,
         Nt_tot=None,
         Na_tot=None,
-        Prad=None,
-        Ptan=None,
         logger_name="Pyleecan.OutStruct",
+        Yr=None,
+        Vr=None,
+        Ar=None,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -56,31 +65,30 @@ class OutStruct(FrozenClass):
                 Nt_tot = init_dict["Nt_tot"]
             if "Na_tot" in list(init_dict.keys()):
                 Na_tot = init_dict["Na_tot"]
-            if "Prad" in list(init_dict.keys()):
-                Prad = init_dict["Prad"]
-            if "Ptan" in list(init_dict.keys()):
-                Ptan = init_dict["Ptan"]
             if "logger_name" in list(init_dict.keys()):
                 logger_name = init_dict["logger_name"]
-        # Initialisation by argument
+            if "Yr" in list(init_dict.keys()):
+                Yr = init_dict["Yr"]
+            if "Vr" in list(init_dict.keys()):
+                Vr = init_dict["Vr"]
+            if "Ar" in list(init_dict.keys()):
+                Ar = init_dict["Ar"]
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
-        # time can be None, a ndarray or a list
-        set_array(self, "time", time)
-        # angle can be None, a ndarray or a list
-        set_array(self, "angle", angle)
+        self.time = time
+        self.angle = angle
         self.Nt_tot = Nt_tot
         self.Na_tot = Na_tot
-        # Prad can be None, a ndarray or a list
-        set_array(self, "Prad", Prad)
-        # Ptan can be None, a ndarray or a list
-        set_array(self, "Ptan", Ptan)
         self.logger_name = logger_name
+        self.Yr = Yr
+        self.Vr = Vr
+        self.Ar = Ar
 
         # The class is frozen, for now it's impossible to add new properties
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         OutStruct_str = ""
         if self.parent is None:
@@ -103,21 +111,10 @@ class OutStruct(FrozenClass):
         )
         OutStruct_str += "Nt_tot = " + str(self.Nt_tot) + linesep
         OutStruct_str += "Na_tot = " + str(self.Na_tot) + linesep
-        OutStruct_str += (
-            "Prad = "
-            + linesep
-            + str(self.Prad).replace(linesep, linesep + "\t")
-            + linesep
-            + linesep
-        )
-        OutStruct_str += (
-            "Ptan = "
-            + linesep
-            + str(self.Ptan).replace(linesep, linesep + "\t")
-            + linesep
-            + linesep
-        )
         OutStruct_str += 'logger_name = "' + str(self.logger_name) + '"' + linesep
+        OutStruct_str += "Yr = " + str(self.Yr) + linesep + linesep
+        OutStruct_str += "Vr = " + str(self.Vr) + linesep + linesep
+        OutStruct_str += "Ar = " + str(self.Ar) + linesep + linesep
         return OutStruct_str
 
     def __eq__(self, other):
@@ -133,17 +130,18 @@ class OutStruct(FrozenClass):
             return False
         if other.Na_tot != self.Na_tot:
             return False
-        if not array_equal(other.Prad, self.Prad):
-            return False
-        if not array_equal(other.Ptan, self.Ptan):
-            return False
         if other.logger_name != self.logger_name:
+            return False
+        if other.Yr != self.Yr:
+            return False
+        if other.Vr != self.Vr:
+            return False
+        if other.Ar != self.Ar:
             return False
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         OutStruct_dict = dict()
         if self.time is None:
@@ -156,16 +154,20 @@ class OutStruct(FrozenClass):
             OutStruct_dict["angle"] = self.angle.tolist()
         OutStruct_dict["Nt_tot"] = self.Nt_tot
         OutStruct_dict["Na_tot"] = self.Na_tot
-        if self.Prad is None:
-            OutStruct_dict["Prad"] = None
-        else:
-            OutStruct_dict["Prad"] = self.Prad.tolist()
-        if self.Ptan is None:
-            OutStruct_dict["Ptan"] = None
-        else:
-            OutStruct_dict["Ptan"] = self.Ptan.tolist()
         OutStruct_dict["logger_name"] = self.logger_name
-        # The class name is added to the dict fordeserialisation purpose
+        if self.Yr is None:
+            OutStruct_dict["Yr"] = None
+        else:
+            OutStruct_dict["Yr"] = self.Yr.as_dict()
+        if self.Vr is None:
+            OutStruct_dict["Vr"] = None
+        else:
+            OutStruct_dict["Vr"] = self.Vr.as_dict()
+        if self.Ar is None:
+            OutStruct_dict["Ar"] = None
+        else:
+            OutStruct_dict["Ar"] = self.Ar.as_dict()
+        # The class name is added to the dict for deserialisation purpose
         OutStruct_dict["__class__"] = "OutStruct"
         return OutStruct_dict
 
@@ -176,9 +178,10 @@ class OutStruct(FrozenClass):
         self.angle = None
         self.Nt_tot = None
         self.Na_tot = None
-        self.Prad = None
-        self.Ptan = None
         self.logger_name = None
+        self.Yr = None
+        self.Vr = None
+        self.Ar = None
 
     def _get_time(self):
         """getter of time"""
@@ -186,7 +189,9 @@ class OutStruct(FrozenClass):
 
     def _set_time(self, value):
         """setter of time"""
-        if type(value) is list:
+        if type(value) is int and value == -1:
+            value = array([])
+        elif type(value) is list:
             try:
                 value = array(value)
             except:
@@ -194,10 +199,13 @@ class OutStruct(FrozenClass):
         check_var("time", value, "ndarray")
         self._time = value
 
-    # Structural time vector (no symmetry)
-    # Type : ndarray
     time = property(
-        fget=_get_time, fset=_set_time, doc=u"""Structural time vector (no symmetry)"""
+        fget=_get_time,
+        fset=_set_time,
+        doc=u"""Structural time vector (no symmetry)
+
+        :Type: ndarray
+        """,
     )
 
     def _get_angle(self):
@@ -206,7 +214,9 @@ class OutStruct(FrozenClass):
 
     def _set_angle(self, value):
         """setter of angle"""
-        if type(value) is list:
+        if type(value) is int and value == -1:
+            value = array([])
+        elif type(value) is list:
             try:
                 value = array(value)
             except:
@@ -214,12 +224,13 @@ class OutStruct(FrozenClass):
         check_var("angle", value, "ndarray")
         self._angle = value
 
-    # Structural position vector (no symmetry)
-    # Type : ndarray
     angle = property(
         fget=_get_angle,
         fset=_set_angle,
-        doc=u"""Structural position vector (no symmetry)""",
+        doc=u"""Structural position vector (no symmetry)
+
+        :Type: ndarray
+        """,
     )
 
     def _get_Nt_tot(self):
@@ -231,10 +242,13 @@ class OutStruct(FrozenClass):
         check_var("Nt_tot", value, "int")
         self._Nt_tot = value
 
-    # Length of the time vector
-    # Type : int
     Nt_tot = property(
-        fget=_get_Nt_tot, fset=_set_Nt_tot, doc=u"""Length of the time vector"""
+        fget=_get_Nt_tot,
+        fset=_set_Nt_tot,
+        doc=u"""Length of the time vector
+
+        :Type: int
+        """,
     )
 
     def _get_Na_tot(self):
@@ -246,52 +260,13 @@ class OutStruct(FrozenClass):
         check_var("Na_tot", value, "int")
         self._Na_tot = value
 
-    # Length of the angle vector
-    # Type : int
     Na_tot = property(
-        fget=_get_Na_tot, fset=_set_Na_tot, doc=u"""Length of the angle vector"""
-    )
+        fget=_get_Na_tot,
+        fset=_set_Na_tot,
+        doc=u"""Length of the angle vector
 
-    def _get_Prad(self):
-        """getter of Prad"""
-        return self._Prad
-
-    def _set_Prad(self, value):
-        """setter of Prad"""
-        if type(value) is list:
-            try:
-                value = array(value)
-            except:
-                pass
-        check_var("Prad", value, "ndarray")
-        self._Prad = value
-
-    # Radial magnetic air-gap surface force
-    # Type : ndarray
-    Prad = property(
-        fget=_get_Prad, fset=_set_Prad, doc=u"""Radial magnetic air-gap surface force"""
-    )
-
-    def _get_Ptan(self):
-        """getter of Ptan"""
-        return self._Ptan
-
-    def _set_Ptan(self, value):
-        """setter of Ptan"""
-        if type(value) is list:
-            try:
-                value = array(value)
-            except:
-                pass
-        check_var("Ptan", value, "ndarray")
-        self._Ptan = value
-
-    # Tangential magnetic air-gap surface force
-    # Type : ndarray
-    Ptan = property(
-        fget=_get_Ptan,
-        fset=_set_Ptan,
-        doc=u"""Tangential magnetic air-gap surface force""",
+        :Type: int
+        """,
     )
 
     def _get_logger_name(self):
@@ -303,10 +278,92 @@ class OutStruct(FrozenClass):
         check_var("logger_name", value, "str")
         self._logger_name = value
 
-    # Name of the logger to use
-    # Type : str
     logger_name = property(
         fget=_get_logger_name,
         fset=_set_logger_name,
-        doc=u"""Name of the logger to use""",
+        doc=u"""Name of the logger to use
+
+        :Type: str
+        """,
+    )
+
+    def _get_Yr(self):
+        """getter of Yr"""
+        return self._Yr
+
+    def _set_Yr(self, value):
+        """setter of Yr"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "SciDataTool.Classes", value.get("__class__"), "Yr"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = DataND()
+        check_var("Yr", value, "DataND")
+        self._Yr = value
+
+    Yr = property(
+        fget=_get_Yr,
+        fset=_set_Yr,
+        doc=u"""Displacement output
+
+        :Type: SciDataTool.Classes.DataND.DataND
+        """,
+    )
+
+    def _get_Vr(self):
+        """getter of Vr"""
+        return self._Vr
+
+    def _set_Vr(self, value):
+        """setter of Vr"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "SciDataTool.Classes", value.get("__class__"), "Vr"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = DataND()
+        check_var("Vr", value, "DataND")
+        self._Vr = value
+
+    Vr = property(
+        fget=_get_Vr,
+        fset=_set_Vr,
+        doc=u"""Velocity output
+
+        :Type: SciDataTool.Classes.DataND.DataND
+        """,
+    )
+
+    def _get_Ar(self):
+        """getter of Ar"""
+        return self._Ar
+
+    def _set_Ar(self, value):
+        """setter of Ar"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "SciDataTool.Classes", value.get("__class__"), "Ar"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = DataND()
+        check_var("Ar", value, "DataND")
+        self._Ar = value
+
+    Ar = property(
+        fget=_get_Ar,
+        fset=_set_Ar,
+        doc=u"""Acceleration output
+
+        :Type: SciDataTool.Classes.DataND.DataND
+        """,
     )

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Circle.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Circle.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Circle
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Surface import Surface
 
 # Import all class method
@@ -152,24 +156,34 @@ class Circle(Surface):
         )
     else:
         comp_point_ref = comp_point_ref
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, radius=1, center=0, line_label="", point_ref=0, label="", init_dict=None
+        self,
+        radius=1,
+        center=0,
+        line_label="",
+        point_ref=0,
+        label="",
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -183,7 +197,7 @@ class Circle(Surface):
                 point_ref = init_dict["point_ref"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.radius = radius
         self.center = center
         self.line_label = line_label
@@ -193,7 +207,7 @@ class Circle(Surface):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Circle_str = ""
         # Get the properties inherited from Surface
@@ -221,15 +235,14 @@ class Circle(Surface):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Surface
         Circle_dict = super(Circle, self).as_dict()
         Circle_dict["radius"] = self.radius
         Circle_dict["center"] = self.center
         Circle_dict["line_label"] = self.line_label
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         Circle_dict["__class__"] = "Circle"
         return Circle_dict
@@ -252,10 +265,14 @@ class Circle(Surface):
         check_var("radius", value, "float", Vmin=0)
         self._radius = value
 
-    # Radius of the circle
-    # Type : float, min = 0
     radius = property(
-        fget=_get_radius, fset=_set_radius, doc=u"""Radius of the circle"""
+        fget=_get_radius,
+        fset=_set_radius,
+        doc=u"""Radius of the circle
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_center(self):
@@ -267,10 +284,13 @@ class Circle(Surface):
         check_var("center", value, "complex")
         self._center = value
 
-    # center of the Circle
-    # Type : complex
     center = property(
-        fget=_get_center, fset=_set_center, doc=u"""center of the Circle"""
+        fget=_get_center,
+        fset=_set_center,
+        doc=u"""center of the Circle
+
+        :Type: complex
+        """,
     )
 
     def _get_line_label(self):
@@ -282,8 +302,11 @@ class Circle(Surface):
         check_var("line_label", value, "str")
         self._line_label = value
 
-    # Label to set to the lines
-    # Type : str
     line_label = property(
-        fget=_get_line_label, fset=_set_line_label, doc=u"""Label to set to the lines"""
+        fget=_get_line_label,
+        fset=_set_line_label,
+        doc=u"""Label to set to the lines
+
+        :Type: str
+        """,
     )

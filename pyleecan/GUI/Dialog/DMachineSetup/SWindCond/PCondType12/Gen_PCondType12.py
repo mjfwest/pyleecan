@@ -2,7 +2,6 @@
 """File generated according to PCondType12/gen_list.json
 WARNING! All changes made in this file will be lost!
 """
-
 from pyleecan.GUI.Dialog.DMachineSetup.SWindCond.PCondType12.Ui_PCondType12 import (
     Ui_PCondType12,
 )
@@ -10,8 +9,7 @@ from pyleecan.GUI.Dialog.DMachineSetup.SWindCond.PCondType12.Ui_PCondType12 impo
 
 class Gen_PCondType12(Ui_PCondType12):
     def setupUi(self, PCondType12):
-        """Abstract class to update the widget according to the csv doc
-        """
+        """Abstract class to update the widget according to the csv doc"""
         Ui_PCondType12.setupUi(self, PCondType12)
         # Setup of in_Nwpc1
         txt = self.tr(

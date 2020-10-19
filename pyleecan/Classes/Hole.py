@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Slot/Hole.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Slot/Hole.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Slot/Hole
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 # Import all class method
@@ -41,6 +45,11 @@ try:
     from ..Methods.Slot.Hole.plot import plot
 except ImportError as error:
     plot = error
+
+try:
+    from ..Methods.Slot.Hole.comp_height import comp_height
+except ImportError as error:
+    comp_height = error
 
 
 from ._check import InitUnKnowClassError
@@ -109,24 +118,34 @@ class Hole(FrozenClass):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # cf Methods.Slot.Hole.comp_height
+    if isinstance(comp_height, ImportError):
+        comp_height = property(
+            fget=lambda x: raise_(
+                ImportError("Can't use Hole method comp_height: " + str(comp_height))
+            )
+        )
+    else:
+        comp_height = comp_height
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, Zh=36, mat_void=-1, init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(self, Zh=36, mat_void=-1, init_dict=None, init_str=None):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_void == -1:
-            mat_void = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -134,20 +153,16 @@ class Hole(FrozenClass):
                 Zh = init_dict["Zh"]
             if "mat_void" in list(init_dict.keys()):
                 mat_void = init_dict["mat_void"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.Zh = Zh
-        # mat_void can be None, a Material object or a dict
-        if isinstance(mat_void, dict):
-            self.mat_void = Material(init_dict=mat_void)
-        else:
-            self.mat_void = mat_void
+        self.mat_void = mat_void
 
         # The class is frozen, for now it's impossible to add new properties
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Hole_str = ""
         if self.parent is None:
@@ -174,8 +189,7 @@ class Hole(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         Hole_dict = dict()
         Hole_dict["Zh"] = self.Zh
@@ -183,7 +197,7 @@ class Hole(FrozenClass):
             Hole_dict["mat_void"] = None
         else:
             Hole_dict["mat_void"] = self.mat_void.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         Hole_dict["__class__"] = "Hole"
         return Hole_dict
 
@@ -203,10 +217,15 @@ class Hole(FrozenClass):
         check_var("Zh", value, "int", Vmin=0, Vmax=1000)
         self._Zh = value
 
-    # Number of Hole around the circumference
-    # Type : int, min = 0, max = 1000
     Zh = property(
-        fget=_get_Zh, fset=_set_Zh, doc=u"""Number of Hole around the circumference"""
+        fget=_get_Zh,
+        fset=_set_Zh,
+        doc=u"""Number of Hole around the circumference
+
+        :Type: int
+        :min: 0
+        :max: 1000
+        """,
     )
 
     def _get_mat_void(self):
@@ -215,16 +234,26 @@ class Hole(FrozenClass):
 
     def _set_mat_void(self, value):
         """setter of mat_void"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "mat_void"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = Material()
         check_var("mat_void", value, "Material")
         self._mat_void = value
 
         if self._mat_void is not None:
             self._mat_void.parent = self
 
-    # Material of the void part of the hole (Air in general)
-    # Type : Material
     mat_void = property(
         fget=_get_mat_void,
         fset=_set_mat_void,
-        doc=u"""Material of the void part of the hole (Air in general)""",
+        doc=u"""Material of the void part of the hole (Air in general)
+
+        :Type: Material
+        """,
     )

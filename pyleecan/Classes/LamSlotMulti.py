@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/LamSlotMulti.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/LamSlotMulti.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/LamSlotMulti
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import set_array, check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Lamination import Lamination
 
 # Import all class method
@@ -169,15 +173,15 @@ class LamSlotMulti(Lamination):
         )
     else:
         get_bore_desc = get_bore_desc
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
         self,
-        slot_list=list(),
+        slot_list=-1,
         alpha=None,
         L1=0.35,
         mat_type=-1,
@@ -188,21 +192,23 @@ class LamSlotMulti(Lamination):
         Rint=0,
         Rext=1,
         is_stator=True,
-        axial_vent=list(),
-        notch=list(),
+        axial_vent=-1,
+        notch=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if mat_type == -1:
-            mat_type = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -232,62 +238,9 @@ class LamSlotMulti(Lamination):
                 axial_vent = init_dict["axial_vent"]
             if "notch" in list(init_dict.keys()):
                 notch = init_dict["notch"]
-        # Initialisation by argument
-        # slot_list can be None or a list of Slot object
-        self.slot_list = list()
-        if type(slot_list) is list:
-            for obj in slot_list:
-                if obj is None:  # Default value
-                    self.slot_list.append(Slot())
-                elif isinstance(obj, dict):
-                    # Check that the type is correct (including daughter)
-                    class_name = obj.get("__class__")
-                    if class_name not in [
-                        "Slot",
-                        "Slot19",
-                        "SlotMFlat",
-                        "SlotMPolar",
-                        "SlotMag",
-                        "SlotUD",
-                        "SlotW10",
-                        "SlotW11",
-                        "SlotW12",
-                        "SlotW13",
-                        "SlotW14",
-                        "SlotW15",
-                        "SlotW16",
-                        "SlotW21",
-                        "SlotW22",
-                        "SlotW23",
-                        "SlotW24",
-                        "SlotW25",
-                        "SlotW26",
-                        "SlotW27",
-                        "SlotW28",
-                        "SlotW29",
-                        "SlotW60",
-                        "SlotW61",
-                        "SlotWind",
-                    ]:
-                        raise InitUnKnowClassError(
-                            "Unknow class name "
-                            + class_name
-                            + " in init_dict for slot_list"
-                        )
-                    # Dynamic import to call the correct constructor
-                    module = __import__(
-                        "pyleecan.Classes." + class_name, fromlist=[class_name]
-                    )
-                    class_obj = getattr(module, class_name)
-                    self.slot_list.append(class_obj(init_dict=obj))
-                else:
-                    self.slot_list.append(obj)
-        elif slot_list is None:
-            self.slot_list = list()
-        else:
-            self.slot_list = slot_list
-        # alpha can be None, a ndarray or a list
-        set_array(self, "alpha", alpha)
+        # Set the properties (value check and convertion are done in setter)
+        self.slot_list = slot_list
+        self.alpha = alpha
         # Call Lamination init
         super(LamSlotMulti, self).__init__(
             L1=L1,
@@ -306,7 +259,7 @@ class LamSlotMulti(Lamination):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         LamSlotMulti_str = ""
         # Get the properties inherited from Lamination
@@ -343,19 +296,21 @@ class LamSlotMulti(Lamination):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Lamination
         LamSlotMulti_dict = super(LamSlotMulti, self).as_dict()
-        LamSlotMulti_dict["slot_list"] = list()
-        for obj in self.slot_list:
-            LamSlotMulti_dict["slot_list"].append(obj.as_dict())
+        if self.slot_list is None:
+            LamSlotMulti_dict["slot_list"] = None
+        else:
+            LamSlotMulti_dict["slot_list"] = list()
+            for obj in self.slot_list:
+                LamSlotMulti_dict["slot_list"].append(obj.as_dict())
         if self.alpha is None:
             LamSlotMulti_dict["alpha"] = None
         else:
             LamSlotMulti_dict["alpha"] = self.alpha.tolist()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         LamSlotMulti_dict["__class__"] = "LamSlotMulti"
         return LamSlotMulti_dict
@@ -371,24 +326,33 @@ class LamSlotMulti(Lamination):
 
     def _get_slot_list(self):
         """getter of slot_list"""
-        for obj in self._slot_list:
-            if obj is not None:
-                obj.parent = self
+        if self._slot_list is not None:
+            for obj in self._slot_list:
+                if obj is not None:
+                    obj.parent = self
         return self._slot_list
 
     def _set_slot_list(self, value):
         """setter of slot_list"""
+        if type(value) is list:
+            for ii, obj in enumerate(value):
+                if type(obj) is dict:
+                    class_obj = import_class(
+                        "pyleecan.Classes", obj.get("__class__"), "slot_list"
+                    )
+                    value[ii] = class_obj(init_dict=obj)
+        if value == -1:
+            value = list()
         check_var("slot_list", value, "[Slot]")
         self._slot_list = value
 
-        for obj in self._slot_list:
-            if obj is not None:
-                obj.parent = self
-
-    # List of lamination Slot
-    # Type : [Slot]
     slot_list = property(
-        fget=_get_slot_list, fset=_set_slot_list, doc=u"""List of lamination Slot"""
+        fget=_get_slot_list,
+        fset=_set_slot_list,
+        doc=u"""List of lamination Slot
+
+        :Type: [Slot]
+        """,
     )
 
     def _get_alpha(self):
@@ -397,7 +361,9 @@ class LamSlotMulti(Lamination):
 
     def _set_alpha(self, value):
         """setter of alpha"""
-        if type(value) is list:
+        if type(value) is int and value == -1:
+            value = array([])
+        elif type(value) is list:
             try:
                 value = array(value)
             except:
@@ -405,8 +371,11 @@ class LamSlotMulti(Lamination):
         check_var("alpha", value, "ndarray")
         self._alpha = value
 
-    # Angular position of the Slots
-    # Type : ndarray
     alpha = property(
-        fget=_get_alpha, fset=_set_alpha, doc=u"""Angular position of the Slots"""
+        fget=_get_alpha,
+        fset=_set_alpha,
+        doc=u"""Angular position of the Slots
+
+        :Type: ndarray
+        """,
     )

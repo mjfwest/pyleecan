@@ -7,6 +7,7 @@ from os.path import abspath, join, isfile
 from re import match
 from subprocess import PIPE, Popen
 from json import load as jload
+import subprocess
 from ..definitions import GEN_DIR, GUI_DIR, RES_NAME, RES_PATH, PACKAGE_NAME
 from ..Generator import TAB, TAB2, TAB3
 from ..Functions.short_filepath import short_filepath
@@ -74,12 +75,13 @@ def gen_gui_edit_file(path, class_name, gen_dict, gen_list):
     # gen_str contains the code that will be written in the generated file
     gen_str = "# -*- coding: utf-8 -*-\n"
     gen_str += '"""File generated according to ' + class_name + "/gen_list.json\n"
-    gen_str += 'WARNING! All changes made in this file will be lost!\n"""\n\n'
+    gen_str += 'WARNING! All changes made in this file will be lost!\n"""\n'
 
     # Generate the import path
     # from "C:\\Users...\\GUI\\Dialog..." to ["C:", "Users",..., "GUI",
     # "Dialog",...]
-    split_path = path.split("\\")  # Split the path arount the \\
+    path = path.replace("\\", "/")
+    split_path = path.split("/")  # Split the path arount the /
     # The import path start at "GUI", we remove everything before GUI in
     # split_path list
     # from ["C:", "Users",..., "GUI", "Dialog",...] to ["GUI", "Dialog"...]
@@ -167,8 +169,8 @@ def gen_gui_class_file(path, class_name, gen_dict, gen_list):
     # from ["GUI", "Dialog", ...] to GUI.Dialog...
     import_path = ".".join(split_path)
 
-    gen_str += "from PyQt5.QtGui import QDialog\n"
-    gen_str += "from PyQt5.QtCore import SIGNAL, Qt\n\n"
+    gen_str += "from PySide2.QtGui import QDialog\n"
+    gen_str += "from PySide2.QtCore import SIGNAL, Qt\n\n"
     gen_str += (
         "from "
         + import_path
@@ -477,7 +479,9 @@ def qrc_to_py(path, file_name):
     path_out = join(path, file_name[:-4] + "_rc.py")  # Output file
 
     # Run the windows command "pyrcc5" for converting files
-    p = Popen('pyrcc5 "' + path_in + '" > "' + path_out + '"', stdout=PIPE, shell=True)
+    p = Popen(
+        'pyside2-rcc "' + path_in + '" -o "' + path_out + '"', stdout=PIPE, shell=True
+    )
     (output, err) = p.communicate()
 
     # Print the name of the converted file for check
@@ -494,23 +498,14 @@ def ui_to_py(path, file_name):
     path_out = join(path, "Ui_" + file_name[:-3] + ".py")  # Output file
 
     print(
-        "pyuic5 --import-from="
-        + PACKAGE_NAME
-        + '.GUI.Resources "'
+        "pyside2-uic "
         + short_filepath(path_in, length=40)
         + '" -o "'
         + short_filepath(path_out, length=40)
         + '"'
     )
-    system(
-        "pyuic5 --import-from="
-        + PACKAGE_NAME
-        + '.GUI.Resources "'
-        + path_in
-        + '" -o "'
-        + path_out
-        + '"'
-    )
+    # system("pyside2-uic " + path_in + '" -o "' + path_out + '"')
+    subprocess.call(["pyside2-uic", path_in, "-o", path_out])
     # Remove header part of the generated file (to avoid "commit noise")
     with open(path_out, "r") as py_file:
         data = py_file.read().splitlines(True)
@@ -520,11 +515,22 @@ def ui_to_py(path, file_name):
         for idx, line in enumerate(data):
             if line.startswith("from pyleecan"):
                 data[idx] = line.replace("from pyleecan", "from " + PACKAGE_NAME)
+    prev_index = 0
+    while "import pyleecan_rc\n" in data:
+        index = data.index("import pyleecan_rc\n")
+        if prev_index == 0:
+            data[index] = data[index].replace(
+                "import", "from " + PACKAGE_NAME + ".GUI.Resources import"
+            )
+        else:
+            data[index] = ""
+        prev_index = index
 
     with open(path_out, "w") as py_file:
         py_file.write(data[0])
         py_file.write("\n# File generated according to " + file_name + "\n")
-        py_file.writelines(data[6:])
+        py_file.write("# WARNING! All changes made in this file will be lost!\n")
+        py_file.writelines(data[7:])
 
 
 #    #Run the windows command "pyuic5" for converting files

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Simulation/ForceMT.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Simulation/ForceMT.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Simulation/ForceMT
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Force import Force
 
 # Import all class method
@@ -27,7 +31,7 @@ from ._check import InitUnKnowClassError
 
 
 class ForceMT(Force):
-    """Force Maxwell tensor model"""
+    """Force Maxwell tensor model for radial flux machines"""
 
     VERSION = 1
 
@@ -53,35 +57,53 @@ class ForceMT(Force):
         )
     else:
         comp_force_nodal = comp_force_nodal
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, is_comp_nodal_force=False, init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(
+        self,
+        is_comp_nodal_force=False,
+        is_periodicity_t=False,
+        is_periodicity_a=False,
+        init_dict=None,
+        init_str=None,
+    ):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
             if "is_comp_nodal_force" in list(init_dict.keys()):
                 is_comp_nodal_force = init_dict["is_comp_nodal_force"]
-        # Initialisation by argument
+            if "is_periodicity_t" in list(init_dict.keys()):
+                is_periodicity_t = init_dict["is_periodicity_t"]
+            if "is_periodicity_a" in list(init_dict.keys()):
+                is_periodicity_a = init_dict["is_periodicity_a"]
+        # Set the properties (value check and convertion are done in setter)
         # Call Force init
-        super(ForceMT, self).__init__(is_comp_nodal_force=is_comp_nodal_force)
+        super(ForceMT, self).__init__(
+            is_comp_nodal_force=is_comp_nodal_force,
+            is_periodicity_t=is_periodicity_t,
+            is_periodicity_a=is_periodicity_a,
+        )
         # The class is frozen (in Force init), for now it's impossible to
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         ForceMT_str = ""
         # Get the properties inherited from Force
@@ -100,12 +122,11 @@ class ForceMT(Force):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Force
         ForceMT_dict = super(ForceMT, self).as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         ForceMT_dict["__class__"] = "ForceMT"
         return ForceMT_dict

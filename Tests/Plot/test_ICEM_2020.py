@@ -7,18 +7,20 @@ import matplotlib.pyplot as plt
 from numpy import array, linspace, ones, pi, zeros
 
 from pyleecan.Classes.import_all import *
-from pyleecan.Functions.GMSH.gen_3D_mesh import gen_3D_mesh
+
+try:
+    from pyleecan.Functions.GMSH.gen_3D_mesh import gen_3D_mesh
+except:
+    gen_3D_mesh = ImportError
 from Tests import save_plot_path
 from Tests.Plot.LamWind import wind_mat
-from Tests.Validation.Machine.SCIM_006 import SCIM_006
-from Tests.Validation.Machine.SPMSM_015 import SPMSM_015
 from pyleecan.Functions.load import load
 from pyleecan.Classes.InputCurrent import InputCurrent
 from pyleecan.Classes.MagFEMM import MagFEMM
 from pyleecan.Classes.Simu1 import Simu1
 from pyleecan.Classes.Output import Output
 from pyleecan.Classes.OptiDesignVar import OptiDesignVar
-from pyleecan.Classes.OptiObjFunc import OptiObjFunc
+from pyleecan.Classes.DataKeeper import DataKeeper
 from pyleecan.Classes.OptiProblem import OptiProblem
 from pyleecan.Classes.ImportMatrixVal import ImportMatrixVal
 from pyleecan.Classes.ImportGenVectLin import ImportGenVectLin
@@ -26,6 +28,8 @@ from pyleecan.Classes.OptiGenAlgNsga2Deap import OptiGenAlgNsga2Deap
 
 import numpy as np
 import random
+from pyleecan.Functions.load import load
+from pyleecan.definitions import DATA_DIR
 
 # Gather results in the same folder
 save_path = join(save_plot_path, "ICEM_2020")
@@ -39,39 +43,36 @@ on Pyleecan open-source object-oriented software"
 
 
 @pytest.mark.FEMM
+@pytest.mark.long
 def test_FEMM_sym():
     """Figure 9: Check that the FEMM can handle symmetry
     From pyleecan/Tests/Validation/Simulation/test_EM_SCIM_NL_006.py
     """
+    SCIM_006 = load(join(DATA_DIR, "Machine", "SCIM_006.json"))
     simu = Simu1(name="ICEM_2020", machine=SCIM_006)
     simu.machine.name = "fig_09_FEMM_sym"
 
     # Definition of the enforced output of the electrical module
-    Nr = ImportMatrixVal(value=ones(1) * 1500)
+    N0 = 1500
     Is = ImportMatrixVal(value=array([[20, -10, -10]]))
     Ir = ImportMatrixVal(value=zeros((1, 28)))
-    time = ImportGenVectLin(start=0, stop=0, num=1, endpoint=False)
-    angle = ImportGenVectLin(start=0, stop=2 * pi, num=4096, endpoint=False)
+    Nt_tot = 1
+    Na_tot = 4096
     simu.input = InputCurrent(
         Is=Is,
         Ir=Ir,  # zero current for the rotor
-        Nr=Nr,
+        N0=N0,
         angle_rotor=None,  # Will be computed
-        time=time,
-        angle=angle,
+        Nt_tot=Nt_tot,
+        Na_tot=Na_tot,
         angle_rotor_initial=0.2244,
     )
 
     # Definition of the magnetic simulation
     # 2 sym + antiperiodicity = 1/4 Lamination
-    simu.mag = MagFEMM(
-        is_stator_linear_BH=2,
-        is_rotor_linear_BH=2,
-        is_symmetry_a=True,
-        sym_a=2,
-        is_antiper_a=True,
-    )
+    simu.mag = MagFEMM(type_BH_stator=2, type_BH_rotor=2, is_periodicity_a=True)
     # Stop after magnetic computation
+    simu.force = None
     simu.struct = None
     # Run simulation
     out = Output(simu=simu)
@@ -93,6 +94,9 @@ def test_gmsh_mesh_dict():
     """Figure 10: Generate a 3D mesh with Gmsh by setting the
     number of element on each lines
     """
+    if isinstance(gen_3D_mesh, ImportError):
+        raise ImportError("Fail to import gen_3D_mesh (gmsh package missing)")
+
     # Stator definition
     stator = LamSlotWind(
         Rint=0.1325,
@@ -153,13 +157,7 @@ def test_SlotMulti_sym():
     plt.close("all")
     # Rotor definition
     rotor = LamSlotMulti(
-        Rint=0.2,
-        Rext=0.7,
-        is_internal=True,
-        is_stator=False,
-        L1=0.9,
-        Nrvd=2,
-        Wrvd=0.05,
+        Rint=0.2, Rext=0.7, is_internal=True, is_stator=False, L1=0.9, Nrvd=2, Wrvd=0.05
     )
 
     # Reference Slot
@@ -204,8 +202,7 @@ def test_SlotMulti_sym():
 
 
 def test_MachineUD():
-    """Figure 12: Check that you can plot a machine with 4 laminations
-    """
+    """Figure 12: Check that you can plot a machine with 4 laminations"""
     machine = MachineUD()
     machine.name = "Machine with 4 laminations"
 
@@ -227,10 +224,7 @@ def test_MachineUD():
     lam1.winding = WindingCW2LT(qs=3, p=3)
     # Outer rotor
     lam2 = LamSlot(
-        Rext=lam1.Rint - A1,
-        Rint=lam1.Rint - A1 - W2,
-        is_internal=True,
-        is_stator=False,
+        Rext=lam1.Rint - A1, Rint=lam1.Rint - A1 - W2, is_internal=True, is_stator=False
     )
     lam2.slot = SlotW10(Zs=22, W0=25e-3, W1=25e-3, W2=15e-3, H0=0, H1=0, H2=W2 * 0.75)
     # Inner rotor
@@ -245,7 +239,7 @@ def test_MachineUD():
     )
     # Inner stator
     lam4 = LamSlotWind(
-        Rext=lam3.Rint - A3, Rint=lam3.Rint - A3 - W4, is_internal=True, is_stator=True,
+        Rext=lam3.Rint - A3, Rint=lam3.Rint - A3 - W4, is_internal=True, is_stator=True
     )
     lam4.slot = SlotW10(Zs=12, W0=25e-3, W1=25e-3, W2=1e-3, H0=0, H1=0, H2=W4 * 0.75)
     lam4.winding = WindingCW2LT(qs=3, p=3)
@@ -261,8 +255,7 @@ def test_MachineUD():
 
 
 def test_SlotMulti():
-    """Figure 13: Check that you can plot a LamSlotMulti (two slots kind + notches)
-    """
+    """Figure 13: Check that you can plot a LamSlotMulti (two slots kind + notches)"""
     plt.close("all")
     # Lamination main dimensions definition
     rotor = LamSlotMulti(Rint=0.2, Rext=0.7, is_internal=True, is_stator=False)
@@ -300,8 +293,7 @@ def test_SlotMulti():
 
 
 def test_SlotUD():
-    """Figure 14: User Defined slot "snowflake"
-    """
+    """Figure 14: User Defined slot "snowflake" """
 
     plt.close("all")
     # Enfore first point on rotor bore
@@ -361,13 +353,7 @@ def test_WindingUD():
     machine.name = "User Defined Winding"
     # Rotor definition
     machine.rotor = LamSlotWind(
-        Rint=0.2,
-        Rext=0.5,
-        is_internal=True,
-        is_stator=False,
-        L1=0.9,
-        Nrvd=2,
-        Wrvd=0.05,
+        Rint=0.2, Rext=0.5, is_internal=True, is_stator=False, L1=0.9, Nrvd=2, Wrvd=0.05
     )
     machine.rotor.axial_vent = [
         VentilationPolar(Zh=6, Alpha0=pi / 6, W1=pi / 6, D0=100e-3, H0=0.3)
@@ -443,9 +429,10 @@ def test_BoreFlower():
 
 
 @pytest.mark.FEMM
+@pytest.mark.long
 def test_ecc_FEMM():
-    """Figure 19: transfrom_list in FEMM for eccentricities
-    """
+    """Figure 19: transfrom_list in FEMM for eccentricities"""
+    SPMSM_015 = load(join(DATA_DIR, "Machine", "SPMSM_015.json"))
     simu = Simu1(name="ICEM_2020", machine=SPMSM_015)
     simu.machine.name = "fig_19_Transform_list"
 
@@ -454,14 +441,14 @@ def test_ecc_FEMM():
     gap = SPMSM_015.comp_width_airgap_mec()
 
     # Definition of the enforced output of the electrical module
-    Nr = ImportMatrixVal(value=ones(1) * 3000)
+    N0 = 3000
     Is = ImportMatrixVal(value=array([[0, 0, 0]]))
     time = ImportGenVectLin(start=0, stop=0, num=1, endpoint=True)
     angle = ImportGenVectLin(start=0, stop=2 * 2 * pi / 9, num=2043, endpoint=False)
     simu.input = InputCurrent(
         Is=Is,
         Ir=None,  # No winding on the rotor
-        Nr=Nr,
+        N0=N0,
         angle_rotor=None,
         time=time,
         angle=angle,
@@ -470,15 +457,15 @@ def test_ecc_FEMM():
 
     # Definition of the magnetic simulation (is_mmfr=False => no flux from the magnets)
     simu.mag = MagFEMM(
-        is_stator_linear_BH=0,
-        is_rotor_linear_BH=0,
+        type_BH_stator=0,
+        type_BH_rotor=0,
         is_sliding_band=False,  # Ecc => No sliding band
-        is_symmetry_a=False,  # No sym
+        is_periodicity_a=False,
         is_mmfs=False,
         is_get_mesh=True,
         is_save_FEA=True,
-        sym_a=1,
     )
+    simu.force = None
     simu.struct = None
 
     # Set two transformations
@@ -504,10 +491,9 @@ def test_ecc_FEMM():
         join(save_path, "fig_19_Transform_list_model.fem"),
     )
     # Plot, check, save
-    out.plot_mesh(mesh=out.mag.meshsolution.mesh[0], title="FEMM Mesh")
-    fig = plt.gcf()
-    fig.savefig(join(save_path, "fig_19_transform_list.png"))
-    fig.savefig(join(save_path, "fig_19_transform_list.svg"), format="svg")
+    out.mag.meshsolution.plot_mesh(
+        save_path=join(save_path, "fig_19_transform_list.png")
+    )
 
 
 @pytest.mark.skip
@@ -519,10 +505,10 @@ def test_Optimization_problem():
     Figure20: Individuals in the fitness space
     Figure21: Pareto Front in the fitness space
     Figure22: Topology to maximize first torque harmonic
-    Figure22: Topology to minimize second torque harmonic  
+    Figure22: Topology to minimize second torque harmonic
 
     WARNING: The computation takes 6 hours on a single 3GHz CPU core.
-    The algorithm uses randomization at different steps so 
+    The algorithm uses randomization at different steps so
     the results won't be exactly the same as the one in the publication
     """
     # ------------------ #
@@ -533,11 +519,11 @@ def test_Optimization_problem():
     # This simulation will the base of every simulation during the optimization process
 
     # Load the machine
-    SPMSM_001 = load("pyleecan/Tests/Validation/Machine/SPMSM_001.json")
+    SPMSM_001 = load(join(DATA_DIR, "Machine", "SPMSM_001.json"))
 
     # Definition of the enforced output of the electrical module
-    Na = 1024  # Angular steps
-    Nt = 32  # Time step
+    Na_tot = 1024  # Angular steps
+    Nt_tot = 32  # Time step
     Is = ImportMatrixVal(
         value=np.array(
             [
@@ -576,10 +562,8 @@ def test_Optimization_problem():
             ]
         )
     )
-    Nr = ImportMatrixVal(value=np.ones(Nt) * 400)
+    N0 = 400
     Ir = ImportMatrixVal(value=np.zeros((Nt, 28)))
-    time = ImportGenVectLin(start=0, stop=1 / (400 / 60) / 24, num=Nt, endpoint=False)
-    angle = ImportGenVectLin(start=0, stop=2 * np.pi, num=Na, endpoint=False)
 
     SPMSM_001.name = (
         "Default SPMSM machine"  # Rename the machine to have the good plot title
@@ -591,22 +575,20 @@ def test_Optimization_problem():
     simu.input = InputCurrent(
         Is=Is,
         Ir=Ir,  # zero current for the rotor
-        Nr=Nr,
+        N0=N0,
         angle_rotor=None,  # Will be computed
-        time=time,
-        angle=angle,
+        Nt_tot=Nt_tot,
+        Na_tot=Na_tot,
         angle_rotor_initial=0.39,
     )
 
     # Definition of the magnetic simulation
     simu.mag = MagFEMM(
-        is_stator_linear_BH=2,
-        is_rotor_linear_BH=2,
-        is_symmetry_a=True,
-        is_antiper_a=False,
+        type_BH_stator=2,
+        type_BH_rotor=2,
+        is_periodicity_a=True,
     )
 
-    simu.mag.sym_a = 4
     simu.struct = None
 
     # Default Output
@@ -621,65 +603,65 @@ def test_Optimization_problem():
     fig = plt.gcf()
     fig.savefig(join(save_path, "fig_21_Machine_topology_before_optimization.png"))
     fig.savefig(
-        join(save_path, "fig_21_Machine_topology_before_optimization.svg"),
-        format="svg",
+        join(save_path, "fig_21_Machine_topology_before_optimization.svg"), format="svg"
     )
-
+    plt.close("all")
     # -------------------- #
     # OPTIMIZATION PROBLEM #
     # -------------------- #
 
     # Objective functions
+    """Return the average torque opposite (opposite to be maximized)"""
+    tem_av = "lambda output: -abs(output.mag.Tem_av)"
 
-    def harm1(output):
-        """Return the average torque opposite (opposite to be maximized)"""
-        N = output.simu.input.time.num
-        x = output.mag.Tem[:, 0]
-        sp = np.fft.rfft(x)
-        sp = 2 / N * np.abs(sp)
-        return -sp[0] / 2
+    """Return the torque ripple """
+    Tem_rip_pp = "lambda output: abs(output.mag.Tem_rip_pp)"
 
-    def harm2(output):
-        """Return the first torque harmonic """
-        N = output.simu.input.time.num
-        x = output.mag.Tem[:, 0]
-        sp = np.fft.rfft(x)
-        sp = 2 / N * np.abs(sp)
-        return sp[1]
-
-    objs = {
-        "Opposite average torque (Nm)": OptiObjFunc(
-            description="Maximization of the average torque", func=harm1
+    my_objs = [
+        DataKeeper(
+            name="Maximization of the average torque",
+            symbol="Tem_av",
+            unit="N.m",
+            keeper=tem_av,
         ),
-        "First torque harmonic (Nm)": OptiObjFunc(
-            description="Minimization of the first torque harmonic", func=harm2
+        DataKeeper(
+            name="Minimization of the torque ripple",
+            symbol="Tem_rip_pp",
+            unit="N.m",
+            keeper=Tem_rip_pp,
         ),
-    }
+    ]
 
     # Design variables
-    my_vars = {
-        "design var 1": OptiDesignVar(
-            name="output.simu.machine.stator.slot.W0",
+    my_vars = [
+        OptiDesignVar(
+            name="Stator slot opening",
+            symbol="W0",
+            unit="m",
             type_var="interval",
             space=[
                 0.2 * output.simu.machine.stator.slot.W2,
                 output.simu.machine.stator.slot.W2,
             ],
-            function=lambda space: random.uniform(*space),
+            get_value="lambda space: random.uniform(*space)",
+            setter="simu.machine.stator.slot.W0",
         ),
-        "design var 2": OptiDesignVar(
-            name="output.simu.machine.rotor.slot.magnet[0].Wmag",
+        OptiDesignVar(
+            name="Rotor magnet width",
+            symbol="Wmag",
+            unit="m",
             type_var="interval",
             space=[
                 0.5 * output.simu.machine.rotor.slot.W0,
                 0.99 * output.simu.machine.rotor.slot.W0,
             ],  # May generate error in FEMM
-            function=lambda space: random.uniform(*space),
+            get_value="lambda space: random.uniform(*space)",
+            setter="simu.machine.rotor.slot.magnet[0].Wmag",
         ),
-    }
+    ]
 
     # Problem creation
-    my_prob = OptiProblem(output=output, design_var=my_vars, obj_func=objs)
+    my_prob = OptiProblem(output=output, design_var=my_vars, obj_func=my_objs)
 
     # Solve problem with NSGA-II
     solver = OptiGenAlgNsga2Deap(problem=my_prob, size_pop=12, nb_gen=40, p_mutate=0.5)
@@ -689,57 +671,66 @@ def test_Optimization_problem():
     # PLOTS RESULTS #
     # ------------- #
 
-    res.plot_generation()
+    res.plot_generation(x_symbol="Tem_av", y_symbol="Tem_rip_pp")
     fig = plt.gcf()
     fig.savefig(join(save_path, "fig_20_Individuals_in_fitness_space.png"))
     fig.savefig(
         join(save_path, "fig_20_Individuals_in_fitness_space.svg"), format="svg"
     )
 
-    res.plot_pareto()
+    res.plot_pareto(x_symbol="Tem_av", y_symbol="Tem_rip_pp")
     fig = plt.gcf()
     fig.savefig(join(save_path, "Pareto_front_in_fitness_space.png"))
     fig.savefig(join(save_path, "Pareto_front_in_fitness_space.svg"), format="svg")
 
     # Extraction of best topologies for every objective
-    pareto = res.get_pareto()  # Extraction of the pareto front
+    pareto_index = (
+        res.get_pareto_index()
+    )  # Extract individual index in the pareto front
 
-    out1 = [pareto[0]["output"], pareto[0]["fitness"]]  # First objective
-    out2 = [pareto[0]["output"], pareto[0]["fitness"]]  # Second objective
+    idx_1 = pareto_index[0]  # First objective
+    idx_2 = pareto_index[0]  # Second objective
 
-    for pm in pareto:
-        if pm["fitness"][0] < out1[1][0]:
-            out1 = [pm["output"], pm["fitness"]]
-        if pm["fitness"][1] < out2[1][1]:
-            out2 = [pm["output"], pm["fitness"]]
+    Tem_av = res["Tem_av"].result
+    Tem_rip_pp = res["Tem_rip_pp"].result
+
+    for i in pareto_index:
+        # First objective
+        if Tem_av[i] < Tem_av[idx_1]:
+            idx_1 = i
+        # Second objective
+        if Tem_rip_pp[i] < Tem_rip_pp[idx_2]:
+            idx_2 = i
+
+    # Get corresponding simulations
+    simu1 = res.get_simu(idx_1)
+    simu2 = res.get_simu(idx_2)
 
     # Rename machine to modify the title
     name1 = "Machine that maximizes the average torque ({:.3f} Nm)".format(
-        abs(out1[1][0])
+        abs(Tem_av[idx_1])
     )
-    out1[0].simu.machine.name = name1
-    name2 = "Machine that minimizes the first torque harmonic ({:.4f}Nm)".format(
-        abs(out1[1][1])
+    simu1.machine.name = name1
+    name2 = "Machine that minimizes the torque ripple ({:.4f}Nm)".format(
+        abs(Tem_rip_pp[idx_2])
     )
-    out2[0].simu.machine.name = name2
+    simu2.machine.name = name2
 
     # plot the machine
-    out1[0].simu.machine.plot()
+    simu1.machine.plot()
     fig = plt.gcf()
     fig.savefig(
-        join(save_path, "fig_21_Topology_to_maximize_average_torque.png"), format="png",
+        join(save_path, "fig_21_Topology_to_maximize_average_torque.png"), format="png"
     )
     fig.savefig(
-        join(save_path, "fig_21_Topology_to_maximize_average_torque.svg"), format="svg",
+        join(save_path, "fig_21_Topology_to_maximize_average_torque.svg"), format="svg"
     )
 
-    out2[0].simu.machine.plot()
+    simu2.machine.plot()
     fig = plt.gcf()
     fig.savefig(
-        join(save_path, "fig_21_Topology_to_minimize_first_torque_harmonic.png"),
-        format="png",
+        join(save_path, "fig_21_Topology_to_minimize_torque_ripple.png"), format="png"
     )
     fig.savefig(
-        join(save_path, "fig_21_Topology_to_minimize_first_torque_harmonic.svg"),
-        format="svg",
+        join(save_path, "fig_21_Topology_to_minimize_torque_ripple.svg"), format="svg"
     )

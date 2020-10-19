@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Material/MatMagnetics.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Material/MatMagnetics.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Material/MatMagnetics
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 # Import all class method
@@ -23,6 +27,9 @@ except ImportError as error:
     plot_BH = error
 
 
+from ..Classes.ImportMatrixVal import ImportMatrixVal
+from numpy import ndarray
+from numpy import array, array_equal
 from ._check import InitUnKnowClassError
 from .ImportMatrix import ImportMatrix
 
@@ -51,26 +58,35 @@ class MatMagnetics(FrozenClass):
         )
     else:
         plot_BH = plot_BH
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, mur_lin=1, Hc=0, Brm20=0, alpha_Br=0, Wlam=0, BH_curve=-1, init_dict=None
+        self,
+        mur_lin=1,
+        Hc=0,
+        Brm20=0,
+        alpha_Br=0,
+        Wlam=0,
+        BH_curve=-1,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if BH_curve == -1:
-            BH_curve = ImportMatrix()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -86,40 +102,20 @@ class MatMagnetics(FrozenClass):
                 Wlam = init_dict["Wlam"]
             if "BH_curve" in list(init_dict.keys()):
                 BH_curve = init_dict["BH_curve"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.mur_lin = mur_lin
         self.Hc = Hc
         self.Brm20 = Brm20
         self.alpha_Br = alpha_Br
         self.Wlam = Wlam
-        # BH_curve can be None, a ImportMatrix object or a dict
-        if isinstance(BH_curve, dict):
-            # Check that the type is correct (including daughter)
-            class_name = BH_curve.get("__class__")
-            if class_name not in [
-                "ImportMatrix",
-                "ImportGenMatrixSin",
-                "ImportGenVectLin",
-                "ImportGenVectSin",
-                "ImportMatrixVal",
-                "ImportMatrixXls",
-            ]:
-                raise InitUnKnowClassError(
-                    "Unknow class name " + class_name + " in init_dict for BH_curve"
-                )
-            # Dynamic import to call the correct constructor
-            module = __import__("pyleecan.Classes." + class_name, fromlist=[class_name])
-            class_obj = getattr(module, class_name)
-            self.BH_curve = class_obj(init_dict=BH_curve)
-        else:
-            self.BH_curve = BH_curve
+        self.BH_curve = BH_curve
 
         # The class is frozen, for now it's impossible to add new properties
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MatMagnetics_str = ""
         if self.parent is None:
@@ -160,8 +156,7 @@ class MatMagnetics(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         MatMagnetics_dict = dict()
         MatMagnetics_dict["mur_lin"] = self.mur_lin
@@ -173,7 +168,7 @@ class MatMagnetics(FrozenClass):
             MatMagnetics_dict["BH_curve"] = None
         else:
             MatMagnetics_dict["BH_curve"] = self.BH_curve.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         MatMagnetics_dict["__class__"] = "MatMagnetics"
         return MatMagnetics_dict
 
@@ -197,10 +192,14 @@ class MatMagnetics(FrozenClass):
         check_var("mur_lin", value, "float", Vmin=0)
         self._mur_lin = value
 
-    # Relative magnetic permeability
-    # Type : float, min = 0
     mur_lin = property(
-        fget=_get_mur_lin, fset=_set_mur_lin, doc=u"""Relative magnetic permeability"""
+        fget=_get_mur_lin,
+        fset=_set_mur_lin,
+        doc=u"""Relative magnetic permeability
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_Hc(self):
@@ -212,9 +211,15 @@ class MatMagnetics(FrozenClass):
         check_var("Hc", value, "float", Vmin=0)
         self._Hc = value
 
-    # Coercitivity field
-    # Type : float, min = 0
-    Hc = property(fget=_get_Hc, fset=_set_Hc, doc=u"""Coercitivity field""")
+    Hc = property(
+        fget=_get_Hc,
+        fset=_set_Hc,
+        doc=u"""Coercitivity field
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Brm20(self):
         """getter of Brm20"""
@@ -225,12 +230,13 @@ class MatMagnetics(FrozenClass):
         check_var("Brm20", value, "float")
         self._Brm20 = value
 
-    # magnet remanence induction at 20degC
-    # Type : float
     Brm20 = property(
         fget=_get_Brm20,
         fset=_set_Brm20,
-        doc=u"""magnet remanence induction at 20degC""",
+        doc=u"""magnet remanence induction at 20degC
+
+        :Type: float
+        """,
     )
 
     def _get_alpha_Br(self):
@@ -242,12 +248,13 @@ class MatMagnetics(FrozenClass):
         check_var("alpha_Br", value, "float")
         self._alpha_Br = value
 
-    # temperature coefficient for remanent flux density /degC compared to 20degC
-    # Type : float
     alpha_Br = property(
         fget=_get_alpha_Br,
         fset=_set_alpha_Br,
-        doc=u"""temperature coefficient for remanent flux density /degC compared to 20degC""",
+        doc=u"""temperature coefficient for remanent flux density /degC compared to 20degC
+
+        :Type: float
+        """,
     )
 
     def _get_Wlam(self):
@@ -259,12 +266,14 @@ class MatMagnetics(FrozenClass):
         check_var("Wlam", value, "float", Vmin=0)
         self._Wlam = value
 
-    # lamination sheet width without insulation [m] (0 == not laminated)
-    # Type : float, min = 0
     Wlam = property(
         fget=_get_Wlam,
         fset=_set_Wlam,
-        doc=u"""lamination sheet width without insulation [m] (0 == not laminated)""",
+        doc=u"""lamination sheet width without insulation [m] (0 == not laminated)
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_BH_curve(self):
@@ -273,16 +282,30 @@ class MatMagnetics(FrozenClass):
 
     def _set_BH_curve(self, value):
         """setter of BH_curve"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, ndarray):
+            value = ImportMatrixVal(value=value)
+        elif isinstance(value, list):
+            value = ImportMatrixVal(value=array(value))
+        elif value == -1:
+            value = ImportMatrix()
+        elif isinstance(value, dict):
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "BH_curve"
+            )
+            value = class_obj(init_dict=value)
         check_var("BH_curve", value, "ImportMatrix")
         self._BH_curve = value
 
         if self._BH_curve is not None:
             self._BH_curve.parent = self
 
-    # nonlinear B(H) curve (two columns matrix, H and B(H))
-    # Type : ImportMatrix
     BH_curve = property(
         fget=_get_BH_curve,
         fset=_set_BH_curve,
-        doc=u"""nonlinear B(H) curve (two columns matrix, H and B(H))""",
+        doc=u"""nonlinear B(H) curve (two columns matrix, H and B(H))
+
+        :Type: ImportMatrix
+        """,
     )

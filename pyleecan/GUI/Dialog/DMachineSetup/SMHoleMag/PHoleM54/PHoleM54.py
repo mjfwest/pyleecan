@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QWidget
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QWidget
 
 from ......Classes.HoleM54 import HoleM54
 from ......GUI import gui_option
 from ......GUI.Dialog.DMachineSetup.SMHoleMag.PHoleM54.Gen_PHoleM54 import Gen_PHoleM54
+from ......GUI.Dialog.DMatLib.MatLib import MatLib
 from ......Methods.Slot.Slot.check import SlotCheckError
 
 
 class PHoleM54(Gen_PHoleM54, QWidget):
-    """Page to set the Hole Type 54
-    """
+    """Page to set the Hole Type 54"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for WHoleMag
     hole_name = "Slot Type 54"
     hole_type = HoleM54
 
-    def __init__(self, hole=None, matlib=[]):
+    def __init__(self, hole=None, matlib=MatLib()):
         """Initialize the widget according to hole
 
         Parameters
@@ -28,8 +28,8 @@ class PHoleM54(Gen_PHoleM54, QWidget):
             A PHoleM54 widget
         hole : HoleM54
             current hole to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         """
         # Build the interface according to the .ui file
         QWidget.__init__(self)
@@ -50,6 +50,13 @@ class PHoleM54(Gen_PHoleM54, QWidget):
         self.matlib = matlib
         self.hole = hole
 
+        # Set default materials
+        self.w_mat_0.setText("mat_void:")
+        self.w_mat_0.def_mat = "Air"
+
+        # Set current material
+        self.w_mat_0.update(self.hole, "mat_void", self.matlib)
+
         # Fill the fields with the machine values (if they're filled)
         self.lf_W0.setValue(self.hole.W0)
         self.lf_R1.setValue(self.hole.R1)
@@ -65,9 +72,10 @@ class PHoleM54(Gen_PHoleM54, QWidget):
         self.lf_H0.editingFinished.connect(self.set_H0)
         self.lf_H1.editingFinished.connect(self.set_H1)
 
+        self.w_mat_0.saveNeeded.connect(self.emit_save)
+
     def emit_save(self):
-        """Send a saveNeeded signal to the DMachineSetup
-        """
+        """Send a saveNeeded signal to the DMachineSetup"""
         self.saveNeeded.emit()
 
     def set_W0(self):
@@ -159,17 +167,7 @@ class PHoleM54(Gen_PHoleM54, QWidget):
             Error message (return None if no error)
         """
 
-        # Check that everything is set
-        if self.hole.W0 is None:
-            return self.tr("You must set W0 !")
-        elif self.hole.R1 is None:
-            return self.tr("You must set R1 !")
-        elif self.hole.H0 is None:
-            return self.tr("You must set H0 !")
-        elif self.hole.H1 is None:
-            return self.tr("You must set H1 !")
-
-        # Constraints
+        # Constraints and None
         try:
             self.hole.check()
         except SlotCheckError as error:

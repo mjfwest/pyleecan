@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/Winding.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/Winding.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/Winding
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 # Import all class method
@@ -28,14 +32,14 @@ except ImportError as error:
     comp_phasor_angle = error
 
 try:
-    from ..Methods.Machine.Winding.comp_resistance_norm import comp_resistance_norm
-except ImportError as error:
-    comp_resistance_norm = error
-
-try:
     from ..Methods.Machine.Winding.comp_winding_factor import comp_winding_factor
 except ImportError as error:
     comp_winding_factor = error
+
+try:
+    from ..Methods.Machine.Winding.comp_length_endwinding import comp_length_endwinding
+except ImportError as error:
+    comp_length_endwinding = error
 
 
 from ._check import InitUnKnowClassError
@@ -46,6 +50,7 @@ class Winding(FrozenClass):
     """Winding abstract class"""
 
     VERSION = 1
+    NAME = "Abstract Winding"
 
     # Check ImportError to remove unnecessary dependencies in unused method
     # cf Methods.Machine.Winding.comp_Ncspc
@@ -78,18 +83,6 @@ class Winding(FrozenClass):
         )
     else:
         comp_phasor_angle = comp_phasor_angle
-    # cf Methods.Machine.Winding.comp_resistance_norm
-    if isinstance(comp_resistance_norm, ImportError):
-        comp_resistance_norm = property(
-            fget=lambda x: raise_(
-                ImportError(
-                    "Can't use Winding method comp_resistance_norm: "
-                    + str(comp_resistance_norm)
-                )
-            )
-        )
-    else:
-        comp_resistance_norm = comp_resistance_norm
     # cf Methods.Machine.Winding.comp_winding_factor
     if isinstance(comp_winding_factor, ImportError):
         comp_winding_factor = property(
@@ -102,9 +95,21 @@ class Winding(FrozenClass):
         )
     else:
         comp_winding_factor = comp_winding_factor
-    # save method is available in all object
+    # cf Methods.Machine.Winding.comp_length_endwinding
+    if isinstance(comp_length_endwinding, ImportError):
+        comp_length_endwinding = property(
+            fget=lambda x: raise_(
+                ImportError(
+                    "Can't use Winding method comp_length_endwinding: "
+                    + str(comp_length_endwinding)
+                )
+            )
+        )
+    else:
+        comp_length_endwinding = comp_length_endwinding
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -120,18 +125,20 @@ class Winding(FrozenClass):
         Lewout=0.015,
         conductor=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if conductor == -1:
-            conductor = Conductor()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -153,7 +160,7 @@ class Winding(FrozenClass):
                 Lewout = init_dict["Lewout"]
             if "conductor" in list(init_dict.keys()):
                 conductor = init_dict["conductor"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.is_reverse_wind = is_reverse_wind
         self.Nslot_shift_wind = Nslot_shift_wind
@@ -163,32 +170,13 @@ class Winding(FrozenClass):
         self.type_connection = type_connection
         self.p = p
         self.Lewout = Lewout
-        # conductor can be None, a Conductor object or a dict
-        if isinstance(conductor, dict):
-            # Check that the type is correct (including daughter)
-            class_name = conductor.get("__class__")
-            if class_name not in [
-                "Conductor",
-                "CondType11",
-                "CondType12",
-                "CondType21",
-                "CondType22",
-            ]:
-                raise InitUnKnowClassError(
-                    "Unknow class name " + class_name + " in init_dict for conductor"
-                )
-            # Dynamic import to call the correct constructor
-            module = __import__("pyleecan.Classes." + class_name, fromlist=[class_name])
-            class_obj = getattr(module, class_name)
-            self.conductor = class_obj(init_dict=conductor)
-        else:
-            self.conductor = conductor
+        self.conductor = conductor
 
         # The class is frozen, for now it's impossible to add new properties
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Winding_str = ""
         if self.parent is None:
@@ -236,8 +224,7 @@ class Winding(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         Winding_dict = dict()
         Winding_dict["is_reverse_wind"] = self.is_reverse_wind
@@ -252,7 +239,7 @@ class Winding(FrozenClass):
             Winding_dict["conductor"] = None
         else:
             Winding_dict["conductor"] = self.conductor.as_dict()
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         Winding_dict["__class__"] = "Winding"
         return Winding_dict
 
@@ -279,12 +266,13 @@ class Winding(FrozenClass):
         check_var("is_reverse_wind", value, "bool")
         self._is_reverse_wind = value
 
-    # 1 to reverse the default winding algorithm along the airgap (c, b, a instead of a, b, c along the trigonometric direction)
-    # Type : bool
     is_reverse_wind = property(
         fget=_get_is_reverse_wind,
         fset=_set_is_reverse_wind,
-        doc=u"""1 to reverse the default winding algorithm along the airgap (c, b, a instead of a, b, c along the trigonometric direction)""",
+        doc=u"""1 to reverse the default winding algorithm along the airgap (c, b, a instead of a, b, c along the trigonometric direction)
+
+        :Type: bool
+        """,
     )
 
     def _get_Nslot_shift_wind(self):
@@ -296,12 +284,13 @@ class Winding(FrozenClass):
         check_var("Nslot_shift_wind", value, "int")
         self._Nslot_shift_wind = value
 
-    # 0 not to change the stator winding connection matrix built by pyleecan number of slots to shift the coils obtained with pyleecan winding algorithm (a, b, c becomes b, c, a with Nslot_shift_wind1=1)
-    # Type : int
     Nslot_shift_wind = property(
         fget=_get_Nslot_shift_wind,
         fset=_set_Nslot_shift_wind,
-        doc=u"""0 not to change the stator winding connection matrix built by pyleecan number of slots to shift the coils obtained with pyleecan winding algorithm (a, b, c becomes b, c, a with Nslot_shift_wind1=1)""",
+        doc=u"""0 not to change the stator winding connection matrix built by pyleecan number of slots to shift the coils obtained with pyleecan winding algorithm (a, b, c becomes b, c, a with Nslot_shift_wind1=1)
+
+        :Type: int
+        """,
     )
 
     def _get_qs(self):
@@ -313,9 +302,16 @@ class Winding(FrozenClass):
         check_var("qs", value, "int", Vmin=1, Vmax=100)
         self._qs = value
 
-    # number of phases
-    # Type : int, min = 1, max = 100
-    qs = property(fget=_get_qs, fset=_set_qs, doc=u"""number of phases """)
+    qs = property(
+        fget=_get_qs,
+        fset=_set_qs,
+        doc=u"""number of phases 
+
+        :Type: int
+        :min: 1
+        :max: 100
+        """,
+    )
 
     def _get_Ntcoil(self):
         """getter of Ntcoil"""
@@ -326,10 +322,15 @@ class Winding(FrozenClass):
         check_var("Ntcoil", value, "int", Vmin=1, Vmax=1000)
         self._Ntcoil = value
 
-    # number of turns per coil
-    # Type : int, min = 1, max = 1000
     Ntcoil = property(
-        fget=_get_Ntcoil, fset=_set_Ntcoil, doc=u"""number of turns per coil"""
+        fget=_get_Ntcoil,
+        fset=_set_Ntcoil,
+        doc=u"""number of turns per coil
+
+        :Type: int
+        :min: 1
+        :max: 1000
+        """,
     )
 
     def _get_Npcpp(self):
@@ -341,12 +342,15 @@ class Winding(FrozenClass):
         check_var("Npcpp", value, "int", Vmin=1, Vmax=1000)
         self._Npcpp = value
 
-    # number of parallel circuits per phase (maximum 2p)
-    # Type : int, min = 1, max = 1000
     Npcpp = property(
         fget=_get_Npcpp,
         fset=_set_Npcpp,
-        doc=u"""number of parallel circuits per phase (maximum 2p)""",
+        doc=u"""number of parallel circuits per phase (maximum 2p)
+
+        :Type: int
+        :min: 1
+        :max: 1000
+        """,
     )
 
     def _get_type_connection(self):
@@ -358,12 +362,15 @@ class Winding(FrozenClass):
         check_var("type_connection", value, "int", Vmin=0, Vmax=1)
         self._type_connection = value
 
-    # Winding connection : 0 star (Y), 1 triangle (delta)
-    # Type : int, min = 0, max = 1
     type_connection = property(
         fget=_get_type_connection,
         fset=_set_type_connection,
-        doc=u"""Winding connection : 0 star (Y), 1 triangle (delta)""",
+        doc=u"""Winding connection : 0 star (Y), 1 triangle (delta)
+
+        :Type: int
+        :min: 0
+        :max: 1
+        """,
     )
 
     def _get_p(self):
@@ -375,9 +382,16 @@ class Winding(FrozenClass):
         check_var("p", value, "int", Vmin=1, Vmax=100)
         self._p = value
 
-    # pole pairs number
-    # Type : int, min = 1, max = 100
-    p = property(fget=_get_p, fset=_set_p, doc=u"""pole pairs number""")
+    p = property(
+        fget=_get_p,
+        fset=_set_p,
+        doc=u"""pole pairs number
+
+        :Type: int
+        :min: 1
+        :max: 100
+        """,
+    )
 
     def _get_Lewout(self):
         """getter of Lewout"""
@@ -388,12 +402,15 @@ class Winding(FrozenClass):
         check_var("Lewout", value, "float", Vmin=0, Vmax=100)
         self._Lewout = value
 
-    # straight length of the conductors outside the lamination before the curved part of winding overhang [m] - can be negative to tune the average turn length
-    # Type : float, min = 0, max = 100
     Lewout = property(
         fget=_get_Lewout,
         fset=_set_Lewout,
-        doc=u"""straight length of the conductors outside the lamination before the curved part of winding overhang [m] - can be negative to tune the average turn length """,
+        doc=u"""straight length of the conductors outside the lamination before the curved part of winding overhang [m] - can be negative to tune the average turn length 
+
+        :Type: float
+        :min: 0
+        :max: 100
+        """,
     )
 
     def _get_conductor(self):
@@ -402,14 +419,26 @@ class Winding(FrozenClass):
 
     def _set_conductor(self, value):
         """setter of conductor"""
+        if isinstance(value, str):  # Load from file
+            value = load_init_dict(value)[1]
+        if isinstance(value, dict) and "__class__" in value:
+            class_obj = import_class(
+                "pyleecan.Classes", value.get("__class__"), "conductor"
+            )
+            value = class_obj(init_dict=value)
+        elif type(value) is int and value == -1:  # Default constructor
+            value = Conductor()
         check_var("conductor", value, "Conductor")
         self._conductor = value
 
         if self._conductor is not None:
             self._conductor.parent = self
 
-    # Winding's conductor
-    # Type : Conductor
     conductor = property(
-        fget=_get_conductor, fset=_set_conductor, doc=u"""Winding's conductor"""
+        fget=_get_conductor,
+        fset=_set_conductor,
+        doc=u"""Winding's conductor
+
+        :Type: Conductor
+        """,
     )

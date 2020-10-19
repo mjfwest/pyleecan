@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/WindingDW1L.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/WindingDW1L.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/WindingDW1L
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Winding import Winding
 
 # Import all class method
@@ -31,6 +35,7 @@ class WindingDW1L(Winding):
     """single layer overlapping integral distributed winding"""
 
     VERSION = 1
+    NAME = "single layer distributed"
 
     # Check ImportError to remove unnecessary dependencies in unused method
     # cf Methods.Machine.WindingDW1L.comp_connection_mat
@@ -56,9 +61,9 @@ class WindingDW1L(Winding):
         )
     else:
         get_dim_wind = get_dim_wind
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
@@ -75,18 +80,20 @@ class WindingDW1L(Winding):
         Lewout=0.015,
         conductor=-1,
         init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if conductor == -1:
-            conductor = Conductor()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -110,7 +117,7 @@ class WindingDW1L(Winding):
                 Lewout = init_dict["Lewout"]
             if "conductor" in list(init_dict.keys()):
                 conductor = init_dict["conductor"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.coil_pitch = coil_pitch
         # Call Winding init
         super(WindingDW1L, self).__init__(
@@ -128,7 +135,7 @@ class WindingDW1L(Winding):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         WindingDW1L_str = ""
         # Get the properties inherited from Winding
@@ -150,13 +157,12 @@ class WindingDW1L(Winding):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Winding
         WindingDW1L_dict = super(WindingDW1L, self).as_dict()
         WindingDW1L_dict["coil_pitch"] = self.coil_pitch
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         WindingDW1L_dict["__class__"] = "WindingDW1L"
         return WindingDW1L_dict
@@ -177,10 +183,13 @@ class WindingDW1L(Winding):
         check_var("coil_pitch", value, "int", Vmin=0, Vmax=1000)
         self._coil_pitch = value
 
-    # winding coil pitch or coil span expressed in slots (coil_pitch1=Zs/(2p)->full-pitch distributed winding, coil_pitch1<Zs/(2p)->chorded/shorted-pitch distributed winding, coil_pitch1=1->tooth-winding). Coil pitch is sometimes written 1/9 means Input.Magnetics.coil_pitch1=9-1=8
-    # Type : int, min = 0, max = 1000
     coil_pitch = property(
         fget=_get_coil_pitch,
         fset=_set_coil_pitch,
-        doc=u"""winding coil pitch or coil span expressed in slots (coil_pitch1=Zs/(2p)->full-pitch distributed winding, coil_pitch1<Zs/(2p)->chorded/shorted-pitch distributed winding, coil_pitch1=1->tooth-winding). Coil pitch is sometimes written 1/9 means Input.Magnetics.coil_pitch1=9-1=8""",
+        doc=u"""winding coil pitch or coil span expressed in slots (coil_pitch1=Zs/(2p)->full-pitch distributed winding, coil_pitch1<Zs/(2p)->chorded/shorted-pitch distributed winding, coil_pitch1=1->tooth-winding). Coil pitch is sometimes written 1/9 means Input.Magnetics.coil_pitch1=9-1=8
+
+        :Type: int
+        :min: 0
+        :max: 1000
+        """,
     )

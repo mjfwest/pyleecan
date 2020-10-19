@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import femm
 from ....Functions.FEMM import boundary_prop
 from numpy import abs, exp
 
 
-def draw_FEMM(self, nodeprop=None, maxseg=None, propname=None, hide=False, group=None):
+def draw_FEMM(
+    self, femm, nodeprop=None, maxseg=None, propname=None, hide=False, group=None
+):
     """Draw the Arc object in FEMM and assign the property
 
     Parameters
     ----------
+    femm : FEMMHandler
+        client to send command to a FEMM instance
     nodeprop :
         Nodal property
          (Default value = None)
@@ -32,8 +35,9 @@ def draw_FEMM(self, nodeprop=None, maxseg=None, propname=None, hide=False, group
     """
 
     # Get BC (if any)
-    if self.label in boundary_prop:
-        propname = boundary_prop[self.label]
+    for bound_label in boundary_prop:
+        if bound_label in self.label:
+            propname = boundary_prop[bound_label]
 
     # split if arc angle > 180
     angle = self.get_angle(is_deg=True)

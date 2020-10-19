@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Material/MatEconomical.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Material/MatEconomical.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Material/MatEconomical
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 from ._check import InitUnKnowClassError
@@ -18,22 +22,25 @@ class MatEconomical(FrozenClass):
 
     VERSION = 1
 
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, cost_unit=0.127, unit_name="$", init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(self, cost_unit=0.127, unit_name="$", init_dict=None, init_str=None):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -41,7 +48,7 @@ class MatEconomical(FrozenClass):
                 cost_unit = init_dict["cost_unit"]
             if "unit_name" in list(init_dict.keys()):
                 unit_name = init_dict["unit_name"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.cost_unit = cost_unit
         self.unit_name = unit_name
@@ -50,7 +57,7 @@ class MatEconomical(FrozenClass):
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         MatEconomical_str = ""
         if self.parent is None:
@@ -75,13 +82,12 @@ class MatEconomical(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         MatEconomical_dict = dict()
         MatEconomical_dict["cost_unit"] = self.cost_unit
         MatEconomical_dict["unit_name"] = self.unit_name
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         MatEconomical_dict["__class__"] = "MatEconomical"
         return MatEconomical_dict
 
@@ -100,12 +106,14 @@ class MatEconomical(FrozenClass):
         check_var("cost_unit", value, "float", Vmin=0)
         self._cost_unit = value
 
-    # Cost of one kilo of material
-    # Type : float, min = 0
     cost_unit = property(
         fget=_get_cost_unit,
         fset=_set_cost_unit,
-        doc=u"""Cost of one kilo of material""",
+        doc=u"""Cost of one kilo of material
+
+        :Type: float
+        :min: 0
+        """,
     )
 
     def _get_unit_name(self):
@@ -117,8 +125,11 @@ class MatEconomical(FrozenClass):
         check_var("unit_name", value, "str")
         self._unit_name = value
 
-    # Name of the unit
-    # Type : str
     unit_name = property(
-        fget=_get_unit_name, fset=_set_unit_name, doc=u"""Name of the unit"""
+        fget=_get_unit_name,
+        fset=_set_unit_name,
+        doc=u"""Name of the unit
+
+        :Type: str
+        """,
     )

@@ -1,25 +1,25 @@
 from .....GUI.Dialog.DMatLib.WMatSelect.Ui_WMatSelect import Ui_WMatSelect
 from .....GUI.Dialog.DMatLib.DMatLib import DMatLib
-from PyQt5.QtWidgets import QWidget, QMessageBox, QDialog
+from PySide2.QtWidgets import QWidget, QMessageBox, QDialog
 from .....Classes.Material import Material
-from PyQt5.QtCore import pyqtSignal
+from PySide2.QtCore import Signal
 
 
 class WMatSelect(Ui_WMatSelect, QWidget):
     """
-    Material related widget including a Label, a Combobox to select a material 
-    and a Button to edit a material libary.  
+    Material related widget including a Label, a Combobox to select a material
+    and a Button to edit a material libary.
     WMatSelect is instantiated to empty material data, so it has to be referenced
     to actual material data with the update method prior to its first usage.
     """
 
     # Signal to W_MachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
 
     def __init__(self, parent=None):
         """
-        Set a reference to a material libray and material data path, 
-        updates the Combobox by the material names of the libary 
+        Set a reference to a material libray and material data path,
+        updates the Combobox by the material names of the libary
         and set a referenced material by name.
 
         Parameters
@@ -28,7 +28,7 @@ class WMatSelect(Ui_WMatSelect, QWidget):
             A WMatSelect object
         parent :
             A reference to the widgets parent
-        
+
         Returns
         -------
 
@@ -50,10 +50,10 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         self.c_mat_type.currentIndexChanged.connect(self.set_mat_type)
         self.b_matlib.clicked.connect(self.s_open_matlib)
 
-    def update(self, obj, mat_attr_name, matlib=list(), matlib_path=""):
+    def update(self, obj, mat_attr_name, matlib, matlib_path=""):
         """
-        Set a reference to a material libray and material data path, 
-        updates the Combobox by the material names of the libary 
+        Set a reference to a material libray and material data path,
+        updates the Combobox by the material names of the libary
         and set a referenced material by name.
 
         Parameters
@@ -83,7 +83,12 @@ class WMatSelect(Ui_WMatSelect, QWidget):
 
         # Update the list of materials
         self.c_mat_type.clear()
-        self.c_mat_type.addItems([mat.name for mat in matlib])
+        items_to_add = []
+        # Add RefMatLib materials
+        items_to_add.extend([mat.name for mat in matlib.dict_mat["RefMatLib"]])
+        # Add machine-specific materials
+        items_to_add.extend([mat.name for mat in matlib.dict_mat["MachineMatLib"]])
+        self.c_mat_type.addItems(items_to_add)
 
         mat = getattr(self.obj, mat_attr_name, None)
         if mat is None or mat.name is None:
@@ -91,7 +96,11 @@ class WMatSelect(Ui_WMatSelect, QWidget):
             index = self.c_mat_type.findText(self.def_mat)
             if index != -1:
                 # self.mat.__init__(init_dict=self.matlib[index].as_dict())
-                setattr(self.obj, self.mat_attr_name, self.matlib[index])
+                setattr(
+                    self.obj,
+                    self.mat_attr_name,
+                    self.matlib.dict_mat["RefMatLib"][index],
+                )
         else:
             index = self.c_mat_type.findText(mat.name)
         self.c_mat_type.setCurrentIndex(index)
@@ -106,8 +115,8 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         self :
             A WMatSelect object
         txt :
-            A text string 
-        
+            A text string
+
         Returns
         -------
 
@@ -117,7 +126,7 @@ class WMatSelect(Ui_WMatSelect, QWidget):
     def set_mat_type(self, index):
         """
         Signal to set the referenced material from the material libary
-        by the selected Combobox index 
+        by the selected Combobox index
 
         Parameters
         ----------
@@ -130,7 +139,13 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         -------
 
         """
-        setattr(self.obj, self.mat_attr_name, self.matlib[index])
+        if index >= len(self.matlib.dict_mat["RefMatLib"]):
+            index -= len(self.matlib.dict_mat["RefMatLib"])
+            dict_key = "MachineMatLib"
+        else:
+            dict_key = "RefMatLib"
+
+        setattr(self.obj, self.mat_attr_name, self.matlib.dict_mat[dict_key][index])
         # Notify the machine GUI that the machine has changed
         self.saveNeeded.emit()
 
@@ -147,9 +162,24 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         -------
 
         """
-        self.mat_win = DMatLib(self.matlib, self.c_mat_type.currentIndex())
+        if self.c_mat_type.currentIndex() >= len(self.matlib.dict_mat["RefMatLib"]):
+            index = self.c_mat_type.currentIndex() - len(
+                self.matlib.dict_mat["RefMatLib"]
+            )
+            key = "MachineMatLib"
+        else:
+            index = self.c_mat_type.currentIndex()
+            key = "RefMatLib"
+        self.mat_win = DMatLib(self.matlib, key, index)
         self.mat_win.accepted.connect(self.set_matlib)
+        self.mat_win.saveNeeded.connect(self.emit_save)
         self.mat_win.show()
+
+    def emit_save(self):
+        """
+        Emit saveNeeded if a material has been edited
+        """
+        self.saveNeeded.emit()
 
     def set_matlib(self):
         """Update the matlib with the new value
@@ -167,7 +197,7 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         # del self.matlib[:]
         # self.matlib.extend(self.mat_win.matlib)
         # Update the material
-        index = int(self.mat_win.nav_mat.currentItem().text()[:3]) - 1
+        # index = int(self.mat_win.nav_mat.currentItem().text()[:3]) - 1
 
         # not needed if machine materials are "connected" properly
         # mat_dict = (self.mat_win.matlib[index]).as_dict()
@@ -183,7 +213,14 @@ class WMatSelect(Ui_WMatSelect, QWidget):
         self.c_mat_type.blockSignals(True)
 
         self.c_mat_type.clear()
-        self.c_mat_type.addItems([mat.name for mat in self.matlib])
+
+        items_to_add = []
+        # Add RefMatLib materials
+        items_to_add.extend([mat.name for mat in self.matlib.dict_mat["RefMatLib"]])
+        # Add machine-specific materials
+        items_to_add.extend([mat.name for mat in self.matlib.dict_mat["MachineMatLib"]])
+        self.c_mat_type.addItems(items_to_add)
+
         index = self.c_mat_type.findText(getattr(self.obj, self.mat_attr_name).name)
         self.c_mat_type.setCurrentIndex(index)
 

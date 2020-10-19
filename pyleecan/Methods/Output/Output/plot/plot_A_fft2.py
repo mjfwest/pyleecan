@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from .....Functions.Plot.plot_A_fft2 import plot_A_fft2 as plot_A_fft2_fct
 from .....Functions.init_fig import init_fig
-from .....Functions.Plot.plot_A_3D import plot_A_3D
-from numpy import meshgrid, append, pi
+from SciDataTool import VectorField
+
+from matplotlib.pyplot import subplots
 
 
 def plot_A_fft2(
@@ -14,11 +16,12 @@ def plot_A_fft2(
     is_spaceorder=False,
     freq_max=20000,
     r_max=100,
-    mag_max=1.0,
+    mag_max=None,
     is_norm=False,
     unit="SI",
-    colormap="RdBu_r",
-    out_list=[],
+    colormap=None,
+    save_path=None,
+    component_list=None,
 ):
     """2D color plot of the 2D Fourier Transform of a field
 
@@ -28,6 +31,8 @@ def plot_A_fft2(
         an Output object
     Data_str : str
         name of the Data Object to plot (e.g. "mag.Br")
+    is_phase : bool
+        boolean indicating if the phase must be plot (subplot)
     is_deg : bool
         boolean indicating if the phase must be converted to degrees
     is_elecorder : bool
@@ -42,87 +47,58 @@ def plot_A_fft2(
         boolean indicating if the field must be normalized
     unit : str
         unit in which to plot the field
-    out_list : list
-        list of Output objects to compare
+    colormap : colormap object
+        colormap prescribed by user
+    save_path : str
+        path and name of the png file to save
+    component_list : list
+        list of component names to plot in separate figures
     """
 
     # Get Data object names
-    Phys = getattr(self, Data_str.split(".")[0])
-    A = getattr(Phys, Data_str.split(".")[1])
-    B_list = []
-    for out in out_list:
-        Phys = getattr(out, Data_str.split(".")[0])
-        B_list.append(getattr(Phys, Data_str.split(".")[1]))
+    phys = getattr(self, Data_str.split(".")[0])
+    data = getattr(phys, Data_str.split(".")[1])
 
-    # Set plot
-    (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
-    title = "FFT2 of " + A.name
-    if is_elecorder:
-        xlabel = "Electrical order []"
-        elec_max = freq_max / A.normalizations.get("elec_order")
-        x_str = "freqs=[0," + str(elec_max) + "]{elec_order}"
+    # Call the plot function
+    if isinstance(data, VectorField):
+        if component_list is None:  # default: extract all components
+            component_list = data.components.keys()
+        ncomp = len(component_list)
+        fig, axs = subplots(1, ncomp, tight_layout=True, figsize=(20, 10))
+        for i, comp in enumerate(component_list):
+            plot_A_fft2_fct(
+                data.components[comp],
+                is_phase=is_phase,
+                is_deg=is_deg,
+                is_elecorder=is_elecorder,
+                is_spaceorder=is_spaceorder,
+                freq_max=freq_max,
+                r_max=r_max,
+                mag_max=mag_max,
+                is_norm=is_norm,
+                unit=unit,
+                colormap=colormap,
+                save_path=save_path,
+                fig=fig,
+                subplot_index=i,
+            )
+
     else:
-        xlabel = "Frequency [Hz]"
-        x_str = "freqs=[0," + str(freq_max) + "]"
-    if is_spaceorder:
-        ylabel = "Spatial order []"
-        order_max = r_max / A.normalizations.get("space_order")
-        y_str = (
-            "wavenumber=[-" + str(order_max) + "," + str(order_max) + "]{space_order}"
-        )
-    else:
-        ylabel = "Wavenumber []"
-        y_str = "wavenumber=[-" + str(r_max) + "," + str(r_max) + "]"
-    if unit == "SI":
-        unit = A.unit
-
-    # Extract the field
-    (freqs, wavenumber, A_mag) = A.get_magnitude_along(x_str, y_str, unit=unit)
-
-    wavenumber = append(wavenumber, wavenumber[-1] + 1) - 0.5
-    freqs = append(freqs, freqs[-1] + 1)
-    wavenumber_map, freqs_map = meshgrid(wavenumber, freqs)
-
-    zlabel = r"$|\widehat{" + A.symbol + "}|\, [" + unit + "]$"
-
-    # Plot the original graph
-    plot_A_3D(
-        freqs_map,
-        wavenumber_map,
-        A_mag,
-        colormap=colormap,
-        z_max=mag_max,
-        z_min=0,
-        title=title,
-        xlabel=xlabel,
-        ylabel=ylabel,
-        zlabel=zlabel,
-        fig=fig,
-        type="pcolor",
-    )
-
-    if is_phase:
-        if is_deg:
-            (freqs, wavenumber, A_phase) = A.get_phase_along(x_str, y_str, unit="°")
-            zlabel = r"$Angle(" + A.symbol + ")\, [°]$"
-            mag_max = 180
-        else:
-            (freqs, wavenumber, A_phase) = A.get_phase_along(x_str, y_str, unit="rad")
-            zlabel = r"$Angle(" + A.symbol + ")\, [rad]$"
-            mag_max = pi
-
-        # Plot the original graph
-        plot_A_3D(
-            freqs_map,
-            wavenumber_map,
-            A_phase,
-            z_max=mag_max,
-            z_min=-mag_max,
+        (fig, axes, patch_leg, label_leg) = init_fig(None, shape="rectangle")
+        plot_A_fft2_fct(
+            data,
+            is_phase=is_phase,
+            is_deg=is_deg,
+            is_elecorder=is_elecorder,
+            is_spaceorder=is_spaceorder,
+            freq_max=freq_max,
+            r_max=r_max,
+            mag_max=mag_max,
+            is_norm=is_norm,
+            unit=unit,
             colormap=colormap,
-            title=title,
-            xlabel=xlabel,
-            ylabel=ylabel,
-            zlabel=zlabel,
+            save_path=save_path,
             fig=fig,
-            type="pcolor",
         )
+
+    fig.show()

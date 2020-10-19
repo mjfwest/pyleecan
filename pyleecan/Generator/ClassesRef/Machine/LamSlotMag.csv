@@ -6,3 +6,5 @@ Variable name,Unit,Description (EN),Size,Type,Default value,Minimum value,Maximu
 ,,,,,,,,,,,comp_surfaces,,,
 ,,,,,,,,,,,comp_volumes,,,
 ,,,,,,,,,,,plot,,,
+,,,,,,,,,,,comp_angle_d_axis,,,
+,,,,,,,,,,,comp_periodicity,,,

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Geometry/Surface.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Geometry/Surface.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Geometry/Surface
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from ._frozen import FrozenClass
 
 # Import all class method
@@ -80,22 +84,25 @@ class Surface(FrozenClass):
         )
     else:
         split_line = split_line
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
-    def __init__(self, point_ref=0, label="", init_dict=None):
-        """Constructor of the class. Can be use in two ways :
+    def __init__(self, point_ref=0, label="", init_dict=None, init_str=None):
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -103,7 +110,7 @@ class Surface(FrozenClass):
                 point_ref = init_dict["point_ref"]
             if "label" in list(init_dict.keys()):
                 label = init_dict["label"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.parent = None
         self.point_ref = point_ref
         self.label = label
@@ -112,7 +119,7 @@ class Surface(FrozenClass):
         self._freeze()
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         Surface_str = ""
         if self.parent is None:
@@ -135,13 +142,12 @@ class Surface(FrozenClass):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         Surface_dict = dict()
         Surface_dict["point_ref"] = self.point_ref
         Surface_dict["label"] = self.label
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         Surface_dict["__class__"] = "Surface"
         return Surface_dict
 
@@ -160,10 +166,13 @@ class Surface(FrozenClass):
         check_var("point_ref", value, "complex")
         self._point_ref = value
 
-    # Center of symmetry
-    # Type : complex
     point_ref = property(
-        fget=_get_point_ref, fset=_set_point_ref, doc=u"""Center of symmetry"""
+        fget=_get_point_ref,
+        fset=_set_point_ref,
+        doc=u"""Center of symmetry
+
+        :Type: complex
+        """,
     )
 
     def _get_label(self):
@@ -175,6 +184,11 @@ class Surface(FrozenClass):
         check_var("label", value, "str")
         self._label = value
 
-    # Label of the surface
-    # Type : str
-    label = property(fget=_get_label, fset=_set_label, doc=u"""Label of the surface""")
+    label = property(
+        fget=_get_label,
+        fset=_set_label,
+        doc=u"""Label of the surface
+
+        :Type: str
+        """,
+    )

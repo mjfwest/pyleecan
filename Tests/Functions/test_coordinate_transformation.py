@@ -11,19 +11,19 @@ from numpy import pi, array
 from numpy.testing import assert_array_almost_equal
 
 from pyleecan.Functions.Electrical.coordinate_transformation import (
-    ab2uvw,
-    uvw2ab,
+    ab2n,
+    n2ab,
     dq2ab,
     ab2dq,
 )
 
+import pytest
 
 """unittest for coordinate transformation functions"""
 
 
 def test_coordinate_transformation_Ok():
-    """Check that the coordinate transformations can return a correct output
-    """
+    """Check that the coordinate transformations can return a correct output"""
 
     X_uvw = array([[1, -0.5, -0.5], [-1, 0.5, 0.5]])
     X_ab = array([[1, 0], [0, 1]])
@@ -34,7 +34,7 @@ def test_coordinate_transformation_Ok():
     X_dq90 = array([[0, -1], [1, 0]])
     X_dq180 = array([[-1, 0], [0, -1]])
 
-    assert_array_almost_equal(ab2uvw(uvw2ab(X_uvw)), X_uvw)
+    assert_array_almost_equal(ab2n(n2ab(X_uvw)), X_uvw)
     assert_array_almost_equal(dq2ab(ab2dq(X_ab, 0), 0), X_ab)
     assert_array_almost_equal(dq2ab(ab2dq(X_ab, th_90), th_90), X_ab)
 

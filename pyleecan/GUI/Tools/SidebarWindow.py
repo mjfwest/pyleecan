@@ -1,5 +1,5 @@
 import sys
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PySide2 import QtWidgets, QtGui, QtCore
 
 """
 def _setColor(widget):
@@ -73,7 +73,7 @@ class SidebarWindow(QtWidgets.QMainWindow):
         """ add a new sub window to the stack including the coresponding button"""
         # Button
         btn = QtWidgets.QPushButton(name)
-        btn.setFixedSize(60, 40)
+        btn.setFixedSize(100, 40)
         btn.setCheckable(True)
 
         self.nav_btn_grp.addButton(btn, self.io_stack.count())
@@ -84,12 +84,16 @@ class SidebarWindow(QtWidgets.QMainWindow):
         self.io_stack.addWidget(widget)
 
     def eventFilter(self, obj, event):
-        """ 
-        Event Filter to disable 'Esc'-Key in a Widgets. 
-        To install eventFilter on a Widget: 
+        """
+        Event Filter to disable 'Esc'-Key in a Widgets.
+        To install eventFilter on a Widget:
             widget.installEventFilter(instance_of_main_window)
         """
         if event.type() == QtCore.QEvent.KeyPress:
             if event.key() in (QtCore.Qt.Key_Escape,):
                 return True
         return super(SidebarWindow, self).eventFilter(obj, event)
+
+    def closeEvent(self, event):
+        """Overload the methode to call DesignWidget.closeEvent """
+        self.DesignWidget.closeEvent(event)

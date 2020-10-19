@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""File generated according to Generator/ClassesRef/Machine/CondType21.csv
-WARNING! All changes made in this file will be lost!
+# File generated according to Generator/ClassesRef/Machine/CondType21.csv
+# WARNING! All changes made in this file will be lost!
+"""Method code available at https://github.com/Eomys/pyleecan/tree/master/pyleecan/Methods/Machine/CondType21
 """
 
 from os import linesep
@@ -8,6 +9,9 @@ from logging import getLogger
 from ._check import check_var, raise_
 from ..Functions.get_logger import get_logger
 from ..Functions.save import save
+from ..Functions.copy import copy
+from ..Functions.load import load_init_dict
+from ..Functions.Load.import_class import import_class
 from .Conductor import Conductor
 
 # Import all class method
@@ -102,28 +106,34 @@ class CondType21(Conductor):
         )
     else:
         plot = plot
-    # save method is available in all object
+    # save and copy methods are available in all object
     save = save
-
+    copy = copy
     # get_logger method is available in all object
     get_logger = get_logger
 
     def __init__(
-        self, Hbar=0.01, Wbar=0.01, Wins=0, cond_mat=-1, ins_mat=-1, init_dict=None
+        self,
+        Hbar=0.01,
+        Wbar=0.01,
+        Wins=0,
+        cond_mat=-1,
+        ins_mat=-1,
+        init_dict=None,
+        init_str=None,
     ):
-        """Constructor of the class. Can be use in two ways :
+        """Constructor of the class. Can be use in three ways :
         - __init__ (arg1 = 1, arg3 = 5) every parameters have name and default values
-            for Matrix, None will initialise the property with an empty Matrix
-            for pyleecan type, None will call the default constructor
-        - __init__ (init_dict = d) d must be a dictionnary wiht every properties as keys
+            for pyleecan type, -1 will call the default constructor
+        - __init__ (init_dict = d) d must be a dictionnary with property names as keys
+        - __init__ (init_str = s) s must be a string
+        s is the file path to load
 
         ndarray or list can be given for Vector and Matrix
         object or dict can be given for pyleecan Object"""
 
-        if cond_mat == -1:
-            cond_mat = Material()
-        if ins_mat == -1:
-            ins_mat = Material()
+        if init_str is not None:  # Load from a file
+            init_dict = load_init_dict(init_str)[1]
         if init_dict is not None:  # Initialisation by dict
             assert type(init_dict) is dict
             # Overwrite default value with init_dict content
@@ -137,7 +147,7 @@ class CondType21(Conductor):
                 cond_mat = init_dict["cond_mat"]
             if "ins_mat" in list(init_dict.keys()):
                 ins_mat = init_dict["ins_mat"]
-        # Initialisation by argument
+        # Set the properties (value check and convertion are done in setter)
         self.Hbar = Hbar
         self.Wbar = Wbar
         self.Wins = Wins
@@ -147,7 +157,7 @@ class CondType21(Conductor):
         # add new properties
 
     def __str__(self):
-        """Convert this objet in a readeable string (for print)"""
+        """Convert this object in a readeable string (for print)"""
 
         CondType21_str = ""
         # Get the properties inherited from Conductor
@@ -175,15 +185,14 @@ class CondType21(Conductor):
         return True
 
     def as_dict(self):
-        """Convert this objet in a json seriable dict (can be use in __init__)
-        """
+        """Convert this object in a json seriable dict (can be use in __init__)"""
 
         # Get the properties inherited from Conductor
         CondType21_dict = super(CondType21, self).as_dict()
         CondType21_dict["Hbar"] = self.Hbar
         CondType21_dict["Wbar"] = self.Wbar
         CondType21_dict["Wins"] = self.Wins
-        # The class name is added to the dict fordeserialisation purpose
+        # The class name is added to the dict for deserialisation purpose
         # Overwrite the mother class name
         CondType21_dict["__class__"] = "CondType21"
         return CondType21_dict
@@ -206,9 +215,15 @@ class CondType21(Conductor):
         check_var("Hbar", value, "float", Vmin=0)
         self._Hbar = value
 
-    # Bar height
-    # Type : float, min = 0
-    Hbar = property(fget=_get_Hbar, fset=_set_Hbar, doc=u"""Bar height""")
+    Hbar = property(
+        fget=_get_Hbar,
+        fset=_set_Hbar,
+        doc=u"""Bar height
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Wbar(self):
         """getter of Wbar"""
@@ -219,9 +234,15 @@ class CondType21(Conductor):
         check_var("Wbar", value, "float", Vmin=0)
         self._Wbar = value
 
-    # Bar width
-    # Type : float, min = 0
-    Wbar = property(fget=_get_Wbar, fset=_set_Wbar, doc=u"""Bar width""")
+    Wbar = property(
+        fget=_get_Wbar,
+        fset=_set_Wbar,
+        doc=u"""Bar width
+
+        :Type: float
+        :min: 0
+        """,
+    )
 
     def _get_Wins(self):
         """getter of Wins"""
@@ -232,6 +253,12 @@ class CondType21(Conductor):
         check_var("Wins", value, "float", Vmin=0)
         self._Wins = value
 
-    # Width of insulation
-    # Type : float, min = 0
-    Wins = property(fget=_get_Wins, fset=_set_Wins, doc=u"""Width of insulation""")
+    Wins = property(
+        fget=_get_Wins,
+        fset=_set_Wins,
+        doc=u"""Width of insulation
+
+        :Type: float
+        :min: 0
+        """,
+    )

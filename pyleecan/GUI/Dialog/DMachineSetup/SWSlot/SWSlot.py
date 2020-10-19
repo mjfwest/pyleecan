@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from numpy import pi
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QMessageBox, QWidget
+from PySide2.QtCore import Signal
+from PySide2.QtWidgets import QMessageBox, QWidget
 
 from .....Classes.LamSlotWind import LamSlotWind
 from .....Classes.Slot import Slot
@@ -50,15 +50,14 @@ SLOT_NAME = [wid.slot_name for wid in WIDGET_LIST]
 
 
 class SWSlot(Gen_SWSlot, QWidget):
-    """Step to set the slot with winding
-    """
+    """Step to set the slot with winding"""
 
     # Signal to DMachineSetup to know that the save popup is needed
-    saveNeeded = pyqtSignal()
+    saveNeeded = Signal()
     # Information for DMachineSetup nav
     step_name = "Slot"
 
-    def __init__(self, machine, matlib=[], is_stator=False):
+    def __init__(self, machine, matlib, is_stator=False):
         """Initialize the GUI according to machine
 
         Parameters
@@ -67,8 +66,8 @@ class SWSlot(Gen_SWSlot, QWidget):
             A SWSlot widget
         machine : Machine
             current machine to edit
-        matlib : list
-            List of available Material
+        matlib : MatLib
+            Material Library
         is_stator : bool
             To adapt the GUI to set either the stator or the rotor
         """
@@ -124,8 +123,7 @@ class SWSlot(Gen_SWSlot, QWidget):
         self.b_plot.clicked.connect(self.s_plot)
 
     def emit_save(self):
-        """Send a saveNeeded signal to the DMachineSetup
-        """
+        """Send a saveNeeded signal to the DMachineSetup"""
         self.saveNeeded.emit()
 
     def set_slot_type(self, index):
@@ -133,7 +131,7 @@ class SWSlot(Gen_SWSlot, QWidget):
 
         Parameters
         ----------
-        self : SWSlot 
+        self : SWSlot
             A SWSlot object
         index : int
             Index of the selected slot type in the list
@@ -167,7 +165,7 @@ class SWSlot(Gen_SWSlot, QWidget):
 
         Parameters
         ----------
-        self : SWSlot 
+        self : SWSlot
             A SWSlot object
         """
         value = self.si_Zs.value()
@@ -183,7 +181,7 @@ class SWSlot(Gen_SWSlot, QWidget):
 
         Parameters
         ----------
-        self : SWSlot 
+        self : SWSlot
             A SWSlot object
         Zs : int
             The current value of Zs
@@ -269,12 +267,14 @@ class SWSlot(Gen_SWSlot, QWidget):
         error: str
             Error message (return None if no error)
         """
+        try:
+            # Check that everything is set
+            if lam.slot.Zs is None:
+                return "You must set Zs !"
 
-        # Check that everything is set
-        if lam.slot.Zs is None:
-            return "You must set Zs !"
-
-        # Call the check method of the slot (every slot type have a
-        # different check method)
-        index = INIT_INDEX.index(type(lam.slot))
-        return WIDGET_LIST[index].check(lam)
+            # Call the check method of the slot (every slot type have a
+            # different check method)
+            index = INIT_INDEX.index(type(lam.slot))
+            return WIDGET_LIST[index].check(lam)
+        except Exception as e:
+            return str(e)
